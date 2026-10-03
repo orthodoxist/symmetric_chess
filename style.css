@@ -41,3 +41,7 @@ main{max-width:1500px}.layout{grid-template-columns:minmax(0,760px) minmax(450px
 @media(max-width:520px){.match-panel.card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:12px;height:470px}.match-history{padding-left:10px}.match-panel .clocks{gap:5px}.match-panel .clock{padding:7px}.match-panel .clock strong{font-size:20px}.material-scores>div{padding:9px}.material-scores strong{font-size:19px}.captured-row{grid-template-columns:1fr;gap:2px}}
 
 img.piece{display:block;width:82%;height:90%;object-fit:contain;font-size:inherit;text-shadow:none;user-select:none;pointer-events:none;filter:drop-shadow(0 1px 1px #0003)}.captured{display:flex;flex-wrap:wrap;align-items:center;gap:3px}.captured img.piece{width:25px;height:29px;flex:none}#choices button img.piece{width:44px;height:50px}#choices{flex-wrap:wrap}
+
+#online-controls{display:grid;gap:10px}#online-controls input{width:100%;min-width:0;padding:10px;border:1px solid #415b60;border-radius:7px;background:#101a22;color:#e7eee9;font-size:12px}#online-status{color:#e5c97d;overflow-wrap:anywhere}
+
+@media(min-width:1051px){.match-panel.card{max-height:none}}
