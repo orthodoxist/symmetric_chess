@@ -22,29 +22,7 @@ function animateLastMove(entry){
   movement=piece.animate([{transform:'translate('+((a.left+a.width/2)-(b.left+b.width/2))+'px,'+((a.top+a.height/2)-(b.top+b.height/2))+'px)'},{transform:'translate(0,0)'}],{duration:360,easing:'cubic-bezier(.25,.7,.3,1)'});
   movement.finished.then(()=>{if(run!==movementRun)return;moving=false;movement=null;to.classList.remove('moving-square');render();}).catch(()=>{});
 }
-let reviewQueue=Promise.resolve();
-const reviewPositions=new WeakMap();
-function performMove(state,r,c,a,b){
-  const before=Chess10.copyGame(state);
-  if(!Chess10.move(state,r,c,a,b))return false;
-  if(before)reviewPositions.set(state.history.at(-1),before);
-  return true;
-}
-function queueReview(){
-  if(typeof Chess10Review==='undefined'||moving||game.pending)return;
-  const state=game,entry=state.history.at(-1),before=entry&&reviewPositions.get(entry);
-  if(!before||entry.reviewRequested)return;
-  entry.reviewRequested=true;const after=Chess10.copyGame(state);
-  reviewQueue=reviewQueue.catch(()=>{}).then(async()=>{
-    if(state!==game)return;
-    const annotation=await Chess10Review.reviewMove(before,entry,after,{shouldCancel:()=>state!==game});
-    if(state!==game||!annotation)return;
-    entry.annotation=annotation;
-    if(state.history.at(-1)===entry)entry.bubbleUntil=Date.now()+2000;
-    if(!moving)render();
-    setTimeout(()=>{if(state===game&&!moving)render();},2100);
-  }).catch(error=>console.error('Move review:',error));
-}
+function performMove(state,r,c,a,b){return Chess10.move(state,r,c,a,b);}
 const computerTurn=()=>gameMode.value==='ai'&&game.turn!==humanColor.value;
 function cancelAI(){aiRun++;aiThinking=false;aiError=false;}
 async function playComputer(){
@@ -103,14 +81,14 @@ function render(){
   if(typeof Chess10Material!=='undefined'){
     const totals=Chess10Material.scores(game);
     for(const color of ['white','black'])document.querySelector('#score-'+color).textContent=totals[color]+' / 100';
-    const before=lastMove&&reviewPositions.get(lastMove);
-    if(before&&!game.pending&&!moving&&!lastMove.valueThreats){
-      lastMove.valueThreats=Chess10Material.newThreats(before,game);
+
+    if(lastMove&&!game.pending&&!moving&&!lastMove.valueThreats){
+      lastMove.valueThreats=Chess10Material.captureThreats(game);
       lastMove.valueBubbleUntil=Date.now()+2000;
       if(lastMove.valueThreats.length){const state=game;setTimeout(()=>{if(state===game&&!moving)render();},2100);}
     }
     if(!moving&&lastMove?.valueBubbleUntil>Date.now())for(const threat of lastMove.valueThreats||[]){
-      for(const [square,mark] of [[threat.from,'!'],[threat.to,'?']]){
+      for(const [square,mark] of [[threat.from,'?'],[threat.to,'!']]){
         const key=square.join(','),previous=valueBubbles.get(key)||'';
         if(!previous.includes(mark))valueBubbles.set(key,previous+mark);
       }
@@ -126,11 +104,11 @@ function render(){
     button.setAttribute('aria-label',notation(r,c)+(p?' '+colorName(p.color)+' '+names[p.type]:' 빈칸')+(win?' · 승리 가능한 기물':'')+(loss?' · 패배 위험 칸':''));
     if(p){const span=document.createElement('span');span.className='piece '+p.color;span.textContent=symbols[p.type];button.append(span);}
     const threatMark=valueBubbles.get(key);
-    const annotation=threatMark?{mark:threatMark,reason:threatMark==='!'?'더 낮은 점수의 기물이 더 높은 점수의 적 기물을 포획할 수 있습니다.':threatMark==='?'?'더 낮은 점수의 적 기물에게 포획될 수 있습니다.':'더 높은 점수의 적을 공격하면서 더 낮은 점수의 적에게 공격받습니다.'}:lastMove?.annotation;
-    if(threatMark||annotation&&lastMove.bubbleUntil>Date.now()&&lastMove.to[0]===r&&lastMove.to[1]===c&&!moving){
-      const bubble=document.createElement('span');bubble.className='move-comment '+(annotation.mark.includes('?')?'mistake':'good');
-      bubble.textContent=annotation.mark;bubble.title=annotation.reason;
-      bubble.setAttribute('aria-label',annotation.mark+' '+annotation.reason);button.append(bubble);
+    if(threatMark){
+      const reason=threatMark==='!'?'상대가 바로 다음 수에 이 기물을 포획할 수 있습니다.':'이번 수에 상대 기물을 포획할 수 있습니다.';
+      const bubble=document.createElement('span');bubble.className='move-comment '+(threatMark==='!'?'mistake':'good');
+      bubble.textContent=threatMark;bubble.title=reason;
+      bubble.setAttribute('aria-label',threatMark+' '+reason);button.append(bubble);
     }
     button.onclick=()=>{
       syncClock();
@@ -156,9 +134,8 @@ function render(){
   document.querySelector('#king-count').textContent=['white','black'].map(color=>colorName(color)+' 킹 '+game.board.flat().filter(p=>p?.color===color&&p.type==='K').length+'/2').join(' · ');
   for(const color of ['white','black'])document.querySelector('#captured-'+color).textContent=game.captured[color].map(p=>symbols[p.type]).join(' ')||'—';
   const history=document.querySelector('#history');history.replaceChildren();
-  for(const entry of game.history){const li=document.createElement('li');li.textContent=`${colorName(entry.color)} ${names[entry.type]} ${notation(...entry.from)} → ${notation(...entry.to)}${entry.capture?' · '+names[entry.capture]+' 포획':''}${entry.promotion?' · '+names[entry.promotion]+' 프로모션':''}${entry.annotation?' '+entry.annotation.mark:''}`;if(entry.annotation)li.title=entry.annotation.reason;history.append(li);}
+  for(const entry of game.history){const li=document.createElement('li');li.textContent=`${colorName(entry.color)} ${names[entry.type]} ${notation(...entry.from)} → ${notation(...entry.to)}${entry.capture?' · '+names[entry.capture]+' 포획':''}${entry.promotion?' · '+names[entry.promotion]+' 프로모션':''}`;history.append(li);}
   history.scrollTop=history.scrollHeight;
-  queueReview();
   if(!moving&&game.pending&&!computerTurn()){const choices=document.querySelector('#choices');choices.replaceChildren();for(const type of game.pending.choices){const b=document.createElement('button');b.textContent=symbols[type];b.setAttribute('aria-label',names[type]+'로 프로모션');b.onclick=()=>{syncClock();if(game.winner||game.draw||computerTurn())return;Chess10.promote(game,type);dialog.close();render();};choices.append(b);}if(!dialog.open)dialog.showModal();}
   if(!moving&&!aiThinking&&!aiError&&computerTurn()&&game.clock.started&&!game.winner&&!game.draw&&!game.pending)setTimeout(playComputer,120);
 }
