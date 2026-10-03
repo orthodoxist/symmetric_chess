@@ -1,6 +1,6 @@
 (function(root){
   const rules=typeof module!=='undefined'?require('./engine.js'):root.Chess10;
-  const points={P:2,N:10,B:5,R:9,Q:16};
+  const points={P:2,N:5,B:6,R:9,Q:15,K:5};
   function scores(game){
     const result={white:0,black:0};
     for(const row of game.board)for(const piece of row)if(piece)result[piece.color]+=points[piece.type]||0;
