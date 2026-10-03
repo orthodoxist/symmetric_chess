@@ -52,7 +52,6 @@
       for(const b of [c-1,c+1]) if(inside(a,b)&&game.board[a][b]&&game.board[a][b].color!==p.color) result.push([a,b]);
     } else if(p.type==='N') {
       for(const [a,b] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) add(r+a,c+b);
-      for(const [a,b] of [[-3,-2],[-3,2],[-2,-3],[-2,3],[2,-3],[2,3],[3,-2],[3,2]]) add(r+a,c+b);
     } else {
       const straight=[[1,0],[-1,0],[0,1],[0,-1]], diagonal=[[1,1],[1,-1],[-1,1],[-1,-1]];
       const dirs=p.type==='R'?straight:p.type==='B'?diagonal:[...straight,...diagonal];

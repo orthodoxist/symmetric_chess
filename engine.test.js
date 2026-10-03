@@ -54,7 +54,7 @@ g=createGame();g.board[7][4]={type:'N',color:'black'};assert.ok(move(g,8,3,7,4))
 g=createGame();g.board[8][3].moved=true;assert.deepEqual(moves(g,8,3),[[7,3]]);
 const movedKey=positionKey(g);g.board[8][3].moved=false;assert.notEqual(positionKey(g),movedKey);
 console.log('Passed: both colors first 1/2/3-square advances, one-square later moves, all path blockers, first capture consumes privilege, pawn rights in repetition key.');
-const knightOffsets=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1],[-3,-2],[-3,2],[-2,-3],[-2,3],[2,-3],[2,3],[3,-2],[3,2]];
+const knightOffsets=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
 for(const color of ['white','black']){
   g=empty();g.turn=color;g.board[5][5]={type:'N',color};
   assert.deepEqual(moves(g,5,5).map(p=>p.join(',')).sort(),knightOffsets.map(([r,c])=>[5+r,5+c].join(',')).sort());
@@ -68,12 +68,12 @@ for(const color of ['white','black']){
     assert.equal(move(g,5,5,5+dr,5+dc),false);
   }
 }
-g=empty();g.board[0][0]={type:'N',color:'white'};assert.deepEqual(moves(g,0,0),[[1,2],[2,1],[2,3],[3,2]]);
+g=empty();g.board[0][0]={type:'N',color:'white'};assert.deepEqual(moves(g,0,0),[[1,2],[2,1]]);
 g=empty();g.board[5][5]={type:'N',color:'white'};assert.equal(move(g,5,5,7,7),false);assert.equal(move(g,5,5,8,8),false);
-g=empty();g.board[1][0]={type:'P',color:'white'};g.captured.white=[{type:'N',color:'white'}];move(g,1,0,0,0);promote(g,'N');g.turn='white';assert.ok(moves(g,0,0).some(([r,c])=>r===3&&c===2));
+g=empty();g.board[1][0]={type:'P',color:'white'};g.captured.white=[{type:'N',color:'white'}];move(g,1,0,0,0);promote(g,'N');g.turn='white';assert.ok(moves(g,0,0).some(([r,c])=>r===2&&c===1));
 const baseline=require('./backups/2026-10-03-symmetric-10x10-v1/engine.js');
 const baselineGame=baseline.createGame();baselineGame.board=Array.from({length:10},()=>Array(10).fill(null));baselineGame.board[5][5]={type:'N',color:'white'};assert.equal(baseline.moves(baselineGame,5,5).length,8);
-console.log('Passed: 16 knight destinations, both colors, jumps, captures, friendly destination exclusion, board edges, illegal diagonals, promoted knight, preserved baseline.');
+console.log('Passed: 8 knight destinations, both colors, jumps, captures, friendly destination exclusion, board edges, illegal diagonals, promoted knight, preserved baseline.');
 function bishopGame(color='white'){
   const state=createGame();state.board=Array.from({length:10},()=>Array(10).fill(null));state.turn=color;state.board[5][5]={type:'B',color};return state;
 }
@@ -106,7 +106,7 @@ for(const color of ['white','black']){
   g.winner=color;assert.deepEqual(winningThreats(g),{white:[],black:[]});
 }
 g=empty();g.board[0][5]=null;g.board[2][2]={type:'B',color:'white'};assert.ok(winningThreats(g).white.some(t=>t.reason==='lastKing'));g.board[1][3]={type:'N',color:'white'};assert.deepEqual(winningThreats(g).white,[]);
-g=empty();g.board[0][5]=null;g.board[3][6]={type:'N',color:'white'};assert.ok(winningThreats(g).white.some(t=>t.reason==='lastKing'));
+g=empty();g.board[0][5]=null;g.board[2][5]={type:'N',color:'white'};assert.ok(winningThreats(g).white.some(t=>t.reason==='lastKing'));
 g.pending={r:0,c:0,color:'white',choices:['N']};assert.deepEqual(winningThreats(g),{white:[],black:[]});g.pending=null;g.draw='repetition';assert.deepEqual(winningThreats(g),{white:[],black:[]});
 console.log('Passed: last-king warnings, two-king exclusion, either turn, promotion eligibility, blocked advances, capture promotion, modified bishop/knight threats, terminal and pending suppression.');
 const {unsafeKingMoves}=require('./engine.js');
@@ -121,7 +121,7 @@ g=loneKingGame();g.board[1][1]={type:'B',color:'black'};
 assert.ok(unsafeKingMoves(g).white.some(([r,c])=>r===6&&c===6));
 g.board[3][3]={type:'P',color:'white'};assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===6&&c===6));
 g=loneKingGame();g.board[4][5]={type:'R',color:'black'};assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===5)); // Captured attacker disappears.
-g=loneKingGame();g.board[2][3]={type:'N',color:'black'};assert.ok(unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===6));
+g=loneKingGame();g.board[2][5]={type:'N',color:'black'};assert.ok(unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===6));
 g=loneKingGame();g.board[3][4]={type:'P',color:'black',moved:true};assert.ok(unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===5));assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===4));
 g=loneKingGame();g.board[0][0]=null;g.board[4][5]={type:'K',color:'black'};g.board[4][0]={type:'R',color:'black'};assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===5)); // Capturing last enemy king ends game immediately.
 g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.quietPlies=59;assert.deepEqual(unsafeKingMoves(g).white,[]); // Draw ends game before a reply.
@@ -179,3 +179,8 @@ g=empty();g.board[1][0]={type:'P',color:'white',moved:true};assert.ok(move(g,1,0
 g=promotionThreatPosition();const legalBefore=JSON.stringify({board:g.board,history:g.history,repetitions:[...g.repetitions]});moves(g,0,0);assert.equal(JSON.stringify({board:g.board,history:g.history,repetitions:[...g.repetitions]}),legalBefore);
 console.log('Passed: illegal king exposure, mandatory defense with all pieces, promotion-loss prevention, pawn capture/block defenses, legal promotion choices, promotion-caused stalemate, victory reasons, non-mutating legality.');
 
+
+for(const color of ['white','black']){
+  g=empty();g.turn=color;g.board[5][5]={type:'N',color};
+  for(const [dr,dc] of [[-3,-2],[-3,2],[-2,-3],[-2,3],[2,-3],[2,3],[3,-2],[3,2]])assert.equal(move(g,5,5,5+dr,5+dc),false);
+}

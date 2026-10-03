@@ -1,6 +1,6 @@
 (function(root){
 const rules=typeof module!=='undefined'?require('./engine.js'):root.Chess10;
-const values={P:100,N:650,B:360,R:560,Q:1050,K:800},WIN=1000000;
+const values={P:100,N:330,B:360,R:560,Q:1050,K:800},WIN=1000000;
 const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
 function evaluate(g,color){
  if(g.winner)return g.winner===color?WIN:-WIN;if(g.draw)return 0;
