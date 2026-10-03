@@ -7,10 +7,25 @@ const board=document.querySelector('#board'),dialog=document.querySelector('#pro
 const timeControl=document.querySelector('#time-control'),startButton=document.querySelector('#start');
 const gameMode=document.querySelector('#game-mode'),humanColor=document.querySelector('#human-color'),aiLevel=document.querySelector('#ai-level'),aiStatus=document.querySelector('#ai-status');
 let aiThinking=false,aiRun=0,aiError=false;
+let animatedGame=null,animatedCount=0,moving=false,movement=null,movementRun=0;
+function cancelMovement(){movementRun++;movement?.cancel();movement=null;moving=false;}
+function animateLastMove(entry){
+  if(!entry||typeof board.getBoundingClientRect!=='function'||typeof board.children[0]?.querySelector!=='function')return;
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  const from=board.children[entry.from[0]*10+entry.from[1]],to=board.children[entry.to[0]*10+entry.to[1]],piece=to.querySelector('.piece');
+  if(!piece?.animate)return;
+  const a=from.getBoundingClientRect(),b=to.getBoundingClientRect();
+  if(!a.width||!b.width)return;
+  piece.textContent=symbols[entry.type];
+  moving=true;const run=++movementRun;
+  to.classList.add('moving-square');
+  movement=piece.animate([{transform:'translate('+((a.left+a.width/2)-(b.left+b.width/2))+'px,'+((a.top+a.height/2)-(b.top+b.height/2))+'px)'},{transform:'translate(0,0)'}],{duration:360,easing:'cubic-bezier(.25,.7,.3,1)'});
+  movement.finished.then(()=>{if(run!==movementRun)return;moving=false;movement=null;to.classList.remove('moving-square');render();}).catch(()=>{});
+}
 const computerTurn=()=>gameMode.value==='ai'&&game.turn!==humanColor.value;
 function cancelAI(){aiRun++;aiThinking=false;aiError=false;}
 async function playComputer(){
-  if(aiThinking||aiError||!computerTurn()||!game.clock.started||game.winner||game.draw||game.pending)return;
+  if(moving||aiThinking||aiError||!computerTurn()||!game.clock.started||game.winner||game.draw||game.pending)return;
   const run=++aiRun,state=game;
   aiThinking=true;selected=null;render();
   try{
@@ -60,16 +75,19 @@ function render(){
   }
   const unsafe=Chess10.unsafeKingMoves(game);
   for(const square of [...unsafe.white,...unsafe.black])losingSquares.add(square.join(','));
+  const lastMove=game.history.at(-1);
+  const shouldAnimate=animatedGame===game&&game.history.length>animatedCount;
+  animatedGame=game;animatedCount=game.history.length;
   board.replaceChildren();
   game.board.forEach((row,r)=>row.forEach((p,c)=>{
     const button=document.createElement('button');
     const key=[r,c].join(','),win=winningSquares.has(key),loss=losingSquares.has(key);
-    button.className='square'+((r+c)%2?' dark':'')+(win?' win-threat':'')+(loss?' loss-threat':'')+(selected?.[0]===r&&selected?.[1]===c?' selected':'')+(available.some(([a,b])=>a===r&&b===c)?' possible':'');
+    button.className='square'+((r+c)%2?' dark':'')+(win?' win-threat':'')+(loss?' loss-threat':'')+(lastMove?.from[0]===r&&lastMove?.from[1]===c?' last-from':'')+(lastMove?.to[0]===r&&lastMove?.to[1]===c?' last-to':'')+(selected?.[0]===r&&selected?.[1]===c?' selected':'')+(available.some(([a,b])=>a===r&&b===c)?' possible':'');
     button.setAttribute('aria-label',notation(r,c)+(p?' '+colorName(p.color)+' '+names[p.type]:' 빈칸')+(win?' · 승리 가능한 기물':'')+(loss?' · 패배 위험 칸':''));
     if(p){const span=document.createElement('span');span.className='piece '+p.color;span.textContent=symbols[p.type];button.append(span);}
     button.onclick=()=>{
       syncClock();
-      if(!game.clock.started||game.winner||game.draw||game.pending||computerTurn())return;
+      if(moving||!game.clock.started||game.winner||game.draw||game.pending||computerTurn())return;
       if(selected?.[0]===r&&selected?.[1]===c)selected=null;
       else if(selected&&Chess10.move(game,...selected,r,c))selected=null;
       else selected=p?.color===game.turn?[r,c]:null;
@@ -77,6 +95,7 @@ function render(){
     };
     board.append(button);
   }));
+  if(shouldAnimate)animateLastMove(lastMove);
   const victoryNames={checkmate:'체크메이트 승리',stalemate:'스테일메이트 승리',promotion:'프로모션 승리',timeout:'시간승',kingCapture:'킹 포획 승리'};
   document.querySelector('#status').textContent=game.winner?colorName(game.winner)+' 승리! · '+(victoryNames[game.winReason]||'승리'):game.draw?'무승부 · '+(game.draw==='repetition'?'3회 반복':'30수 규칙'):!game.clock.started?'시간을 선택하고 대국을 시작하세요':game.pending?colorName(game.turn)+' · 프로모션 선택':colorName(game.turn)+'의 차례';
   timeControl.disabled=game.clock.started;
@@ -92,11 +111,11 @@ function render(){
   const history=document.querySelector('#history');history.replaceChildren();
   for(const entry of game.history){const li=document.createElement('li');li.textContent=`${colorName(entry.color)} ${names[entry.type]} ${notation(...entry.from)} → ${notation(...entry.to)}${entry.capture?' · '+names[entry.capture]+' 포획':''}${entry.promotion?' · '+names[entry.promotion]+' 프로모션':''}`;history.append(li);}
   history.scrollTop=history.scrollHeight;
-  if(game.pending&&!computerTurn()){const choices=document.querySelector('#choices');choices.replaceChildren();for(const type of game.pending.choices){const b=document.createElement('button');b.textContent=symbols[type];b.setAttribute('aria-label',names[type]+'로 프로모션');b.onclick=()=>{syncClock();if(game.winner||game.draw||computerTurn())return;Chess10.promote(game,type);dialog.close();render();};choices.append(b);}if(!dialog.open)dialog.showModal();}
-  if(!aiThinking&&!aiError&&computerTurn()&&game.clock.started&&!game.winner&&!game.draw&&!game.pending)setTimeout(playComputer,120);
+  if(!moving&&game.pending&&!computerTurn()){const choices=document.querySelector('#choices');choices.replaceChildren();for(const type of game.pending.choices){const b=document.createElement('button');b.textContent=symbols[type];b.setAttribute('aria-label',names[type]+'로 프로모션');b.onclick=()=>{syncClock();if(game.winner||game.draw||computerTurn())return;Chess10.promote(game,type);dialog.close();render();};choices.append(b);}if(!dialog.open)dialog.showModal();}
+  if(!moving&&!aiThinking&&!aiError&&computerTurn()&&game.clock.started&&!game.winner&&!game.draw&&!game.pending)setTimeout(playComputer,120);
 }
 dialog.addEventListener('cancel',e=>e.preventDefault());
-document.querySelector('#restart').onclick=()=>{if(game.clock.started&&!game.winner&&!game.draw&&!confirm('현재 게임을 끝내고 새 게임을 시작할까요?'))return;cancelAI();game=Chess10.createGame(Number(timeControl.value));selected=null;dialog.close();render();};
+document.querySelector('#restart').onclick=()=>{if(game.clock.started&&!game.winner&&!game.draw&&!confirm('현재 게임을 끝내고 새 게임을 시작할까요?'))return;cancelAI();cancelMovement();game=Chess10.createGame(Number(timeControl.value));selected=null;dialog.close();render();};
 timeControl.onchange=()=>{if(game.clock.started)return;game=Chess10.createGame(Number(timeControl.value));selected=null;render();};
 startButton.onclick=()=>{if(game.clock.started)return;Chess10.startClock(game);render();};
 gameMode.onchange=()=>{if(!game.clock.started){cancelAI();selected=null;render();}};
