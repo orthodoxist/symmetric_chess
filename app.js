@@ -79,6 +79,8 @@ async function playComputer(){
   }
 }
 function renderClocks(){
+  const elapsed=Math.max(0,Math.floor((Number(timeControl.value)*120000-game.clock.remaining.white-game.clock.remaining.black)/1000));
+  document.querySelector('#total-time').textContent=String(Math.floor(elapsed/3600)).padStart(2,'0')+':'+String(Math.floor(elapsed/60)%60).padStart(2,'0')+':'+String(elapsed%60).padStart(2,'0');
   for(const color of ['white','black']){
     const seconds=Math.ceil(game.clock.remaining[color]/1000);
     document.querySelector('#time-'+color).textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');

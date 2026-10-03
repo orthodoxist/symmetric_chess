@@ -45,3 +45,4 @@ img.piece{display:block;width:82%;height:90%;object-fit:contain;font-size:inheri
 #online-controls{display:grid;gap:10px}#online-controls input{width:100%;min-width:0;padding:10px;border:1px solid #415b60;border-radius:7px;background:#101a22;color:#e7eee9;font-size:12px}#online-status{color:#e5c97d;overflow-wrap:anywhere}
 
 @media(min-width:1051px){.match-panel.card{max-height:none}}
+.total-time{display:flex;justify-content:space-between;gap:8px;margin:10px 0}.total-time strong{color:#e5e9ee;font-size:15px;font-variant-numeric:tabular-nums}
