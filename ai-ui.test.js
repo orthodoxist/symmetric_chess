@@ -40,10 +40,13 @@ function setup(){
   h.element('#start').onclick();h.timers.shift()();h.requests[0].resolve({from:[1,4],to:[0,4],promotion:'Q'});await h.flush();assert.equal(h.run('game.board[0][4].type'),'Q');assert.equal(h.element('#promotion').open,false);assert.equal(h.run('game.turn'),'black');
   h=setup();h.element('#time-control').value='30';h.element('#time-control').onchange();assert.equal(h.run('game.clock.remaining.white'),1800000);assert.equal(h.run('game.clock.started'),false);assert.equal(h.element('#match-screen').hidden,true);
   h.element('#start').onclick();assert.equal(h.run('game.clock.remaining.black'),1800000);assert.equal(h.element('#setup-screen').hidden,true);h.element('#restart').onclick();h.element('#time-control').value='45';h.element('#time-control').onchange();h.element('#start').onclick();assert.equal(h.run('game.clock.remaining.white'),2700000);assert.equal(h.element('#match-screen').hidden,false);
-  h=setup();h.element('#human-color').value='black';h.element('#ai-level').value='expert';h.element('#start').onclick();h.timers.shift()();
-  assert.equal(h.requests[0].options.level,'expert');assert.equal(h.requests[0].options.budgetMs,10000);
-  h=setup();h.element('#human-color').value='black';h.element('#ai-level').value='expert';h.element('#start').onclick();h.run('game.clock.remaining.white=500');h.timers.shift()();
+  h=setup();h.element('#human-color').value='black';h.element('#ai-level').value='hard';h.element('#start').onclick();h.timers.shift()();
+  assert.equal(h.requests[0].options.level,'hard');assert.equal(h.requests[0].options.budgetMs,10000);
+  h=setup();h.element('#human-color').value='black';h.element('#ai-level').value='hard';h.element('#start').onclick();h.run('game.clock.remaining.white=500');h.timers.shift()();
   assert.ok(h.requests[0].options.budgetMs<=400);
+  for(const [level,budget] of [['easy',3000],['medium',6000],['hard',10000]]){
+    h=setup();h.element('#human-color').value='black';h.element('#ai-level').value=level;h.element('#start').onclick();h.timers.shift()();assert.equal(h.requests[0].options.budgetMs,budget);
+  }
   // Only the capturing piece receives !; unrelated threats have no bubbles.
   h=setup();h.element('#game-mode').value='local';h.element('#start').onclick();
   h.run("game.board[3][5]={type:'R',color:'white'};game.history.push({color:'white',type:'R',capture:'N',from:[5,5],to:[3,5],captureBadge:true,valueBubbleUntil:Date.now()+2000});render();");

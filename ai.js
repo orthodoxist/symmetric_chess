@@ -40,8 +40,8 @@ function applyAction(g,a){
 }
 async function chooseAction(game,{level='medium',budgetMs,random=Math.random,shouldCancel=()=>false,onIteration=()=>{},exactRoot=false}={}){
  if(game.winner||game.draw||game.pending)return null;
- const settings={easy:{depth:1,budget:250,width:8},medium:{depth:2,budget:900,width:12},hard:{depth:3,budget:2000,width:18},expert:{depth:12,budget:10000,width:Infinity}};
- const config=settings[level]||settings.medium,advanced=level==='expert',deadline=Date.now()+(budgetMs??config.budget),STOP=Symbol('stop'),table=new Map();
+ const settings={easy:{depth:3,budget:3000,width:10},medium:{depth:5,budget:6000,width:18},hard:{depth:12,budget:10000,width:Infinity}};
+ const config=settings[level]||settings.medium,advanced=level==='hard',deadline=Date.now()+(budgetMs??config.budget),STOP=Symbol('stop'),table=new Map();
  let lastYield=Date.now(),nodes=0;
  const check=()=>{if(shouldCancel()||Date.now()>=deadline)throw STOP;};
  async function cooperate(fallback=false){if(Date.now()-lastYield>=8){await pause();lastYield=Date.now();}if(shouldCancel())throw STOP;if(!fallback)check();}
@@ -90,7 +90,6 @@ async function chooseAction(game,{level='medium',budgetMs,random=Math.random,sho
   // Always complete legal fallback generation while yielding and cancelling.
   const candidates=await actions(game,true);if(!candidates.length)return null;let best=candidates[0].action;
   for(const c of candidates)if(c.child.winner===game.turn&&!exactRoot)return c.action;
-  if(level==='easy'){const top=candidates.slice(0,5);return top[Math.min(top.length-1,Math.floor(random()*top.length))].action;}
   for(let depth=1;depth<=config.depth;depth++){
    let nextBest=best,score=-Infinity;const scores=[];candidates.sort((a,b)=>(actionKey(b.action)===actionKey(best))-(actionKey(a.action)===actionKey(best))||b.order-a.order);
    try{
