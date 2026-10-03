@@ -14,4 +14,6 @@ host.game.board=Array.from({length:10},()=>Array(10).fill(null));host.game.turn=
 assert.ok(host.apply({kind:'move',from:[1,0],to:[0,0]},'white',2));assert.ok(guest.game.pending);assert.equal(host.apply({kind:'promote',type:'N'},'white',3),false);assert.ok(host.apply({kind:'promote',type:'Q'},'white',3));assert.equal(guest.game.board[0][0].type,'Q');
 now+=900001;host.tick();assert.equal(host.game.winner,'white');assert.equal(guest.game.winReason,'timeout');
 const intruder=new EventEmitter();intruder.metadata={protocol:'symmetric-chess-v1-classic',token:'intruder'};intruder.send=m=>{assert.equal(m.kind,'reject');};intruder.close=()=>{};host.guestToken='original';host.accept(intruder);intruder.emit('open');
-host.close();guest.close();console.log('Passed: host authority, colors, synchronized states, turn/revision/legality rejection, promotion, timeout and extra-player rejection.');
+// Binary serialization lets PeerJS chunk snapshots beyond its JSON channel limit.
+guest.conn=null;guest.room='test-room';guest.peer.connect=(room,options)=>{assert.equal(options.serialization,'binary');assert.equal(options.reliable,true);return new EventEmitter();};guest.connect();
+host.close();guest.conn=null;guest.close();console.log('Passed: host authority, colors, synchronized states, turn/revision/legality rejection, promotion, timeout and extra-player rejection.');

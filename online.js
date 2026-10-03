@@ -21,7 +21,7 @@
     connect(){
       if(this.closed||this.conn?.open)return;
       this.onStatus('상대방과 연결 중입니다…');
-      this.bind(this.peer.connect(this.room,{reliable:true,serialization:'json',metadata:{protocol:PROTOCOL,token:this.token}}));
+      this.bind(this.peer.connect(this.room,{reliable:true,serialization:'binary',metadata:{protocol:PROTOCOL,token:this.token}}));
     }
     accept(conn){
       const m=conn.metadata;
@@ -43,7 +43,7 @@
         this.ready=false;this.busy=false;this.onStatus('상대와 연결이 끊겼습니다. 시계는 계속 진행됩니다.');
         if(!this.host)setTimeout(()=>{if(!this.closed&&!this.ready)this.connect();},3000);
       });
-      conn.on('error',()=>this.onStatus('대국 연결에 문제가 있습니다. 네트워크를 확인해주세요.'));
+      conn.on('error',error=>{console.error('Chess data connection error',error);this.onStatus(error.type==='message-too-big'?'대국 데이터 전송 크기 오류입니다. 두 플레이어 모두 최신 화면으로 다시 접속해주세요.':'대국 연결에 문제가 있습니다. 네트워크를 확인해주세요.');});
     }
     broadcast(){
       if(this.conn?.open)this.conn.send({kind:'state',protocol:PROTOCOL,revision:this.revision,color:this.color==='white'?'black':'white',minutes:this.minutes,game:pack(this.game)});
