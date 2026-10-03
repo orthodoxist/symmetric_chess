@@ -25,7 +25,7 @@
 
 [hidden]{display:none!important}
 .setup-screen{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:24px;align-items:start}
-.setup-screen>.card:first-child{grid-column:1;grid-row:1 / span 2}
+.setup-screen>.card:first-child{grid-column:1}
 .setup-screen>.card{margin:0}
 .setup-screen .start-game{margin-top:6px;background:#426b5e;border-color:#81b8aa;padding:13px;font-weight:600}
 .match-time #match-summary{margin-bottom:12px}
@@ -46,3 +46,5 @@ img.piece{display:block;width:82%;height:90%;object-fit:contain;font-size:inheri
 
 @media(min-width:1051px){.match-panel.card{max-height:none}}
 .total-time{display:flex;justify-content:space-between;gap:8px;margin:10px 0}.total-time strong{color:#e5e9ee;font-size:15px;font-variant-numeric:tabular-nums}
+
+.setup-rules{display:grid;gap:16px;min-width:0}.setup-rules>.card{margin:0}
