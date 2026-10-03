@@ -1,0 +1,10 @@
+{
+  "name": "symmetric-chess",
+  "version": "1.0.0",
+  "private": true,
+  "description": "10×10 symmetric chess with browser AI",
+  "scripts": {
+    "test": "node engine.test.js && node ai.test.js && node ai-ui.test.js",
+    "build": "node scripts/build-static.cjs"
+  }
+}

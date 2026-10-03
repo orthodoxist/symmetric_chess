@@ -1,0 +1,9 @@
+.sites-runtime/
+.deploy/
+public/
+dist/
+node_modules/
+*.tar.gz
+*.zip
+.env
+.env.*
