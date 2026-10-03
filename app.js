@@ -4,6 +4,7 @@ function pieceImage(type,color){
 }
 const names={R:'룩',N:'나이트',B:'비숍',Q:'퀸',K:'킹',P:'폰'};
 const colorName=c=>c==='white'?'백':'흑';
+const difficultyName=()=>({easy:'쉬움',medium:'보통',hard:'어려움'}[aiLevel.value]);
 const notation=(r,c)=>String.fromCharCode(97+c)+(10-r);
 let game=Chess10.createGame(),selected=null;
 const board=document.querySelector('#board'),dialog=document.querySelector('#promotion');
@@ -100,7 +101,7 @@ function render(){
   document.querySelector('#setup-screen').hidden=game.clock.started;
   document.querySelector('#match-screen').hidden=!game.clock.started;
   document.querySelector('#restart').hidden=!game.clock.started;
-  document.querySelector('#match-summary').textContent=(onlineMode()?'온라인 대결':gameMode.value==='ai'?'컴퓨터 대결':'혼자 연습')+' · 각 '+timeControl.value+'분 + 0초';
+  document.querySelector('#match-summary').textContent=(onlineMode()?'온라인 대결':gameMode.value==='ai'?'컴퓨터 대결 · '+difficultyName():'혼자 연습')+' · 각 '+timeControl.value+'분 + 0초';
   const available=selected?Chess10.moves(game,...selected):[];
   const threats=Chess10.winningThreats(game);
   const winningSquares=new Set(),losingSquares=new Set();
@@ -151,7 +152,7 @@ function render(){
   }));
   if(shouldAnimate)animateLastMove(lastMove);
   const victoryNames={checkmate:'체크메이트 승리',stalemate:'스테일메이트 승리',promotion:'프로모션 승리',timeout:'시간승',kingCapture:'킹 포획 승리',resign:'기권승'};
-  document.querySelector('#status').textContent=game.winner?colorName(game.winner)+' 승리! · '+(victoryNames[game.winReason]||'승리'):game.draw?'무승부 · '+(game.draw==='repetition'?'3회 반복':'30수 규칙'):!game.clock.started?'시간을 선택하고 대국을 시작하세요':game.pending?colorName(game.turn)+' · 프로모션 선택':colorName(game.turn)+'의 차례';
+  document.querySelector('#status').textContent=game.winner?colorName(game.winner)+' 승리! · '+(victoryNames[game.winReason]||'승리')+(gameMode.value==='ai'?' · 컴퓨터 난이도: '+difficultyName():''):game.draw?'무승부 · '+(game.draw==='repetition'?'3회 반복':'30수 규칙'):!game.clock.started?'시간을 선택하고 대국을 시작하세요':game.pending?colorName(game.turn)+' · 프로모션 선택':colorName(game.turn)+'의 차례';
   document.querySelector('#online-controls').hidden=!onlineMode();
   document.querySelector('#online-status').textContent=onlineMessage;
   document.querySelector('#create-room').disabled=onlineConnecting||Boolean(onlineSession);
