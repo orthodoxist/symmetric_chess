@@ -25,7 +25,7 @@ function animateLastMove(entry){
 let reviewQueue=Promise.resolve();
 const reviewPositions=new WeakMap();
 function performMove(state,r,c,a,b){
-  const before=typeof Chess10Review!=='undefined'?Chess10.copyGame(state):null;
+  const before=Chess10.copyGame(state);
   if(!Chess10.move(state,r,c,a,b))return false;
   if(before)reviewPositions.set(state.history.at(-1),before);
   return true;
@@ -99,6 +99,23 @@ function render(){
   const unsafe=Chess10.unsafeKingMoves(game);
   for(const square of [...unsafe.white,...unsafe.black])losingSquares.add(square.join(','));
   const lastMove=game.history.at(-1);
+  const valueBubbles=new Map();
+  if(typeof Chess10Material!=='undefined'){
+    const totals=Chess10Material.scores(game);
+    for(const color of ['white','black'])document.querySelector('#score-'+color).textContent=totals[color]+' / 100';
+    const before=lastMove&&reviewPositions.get(lastMove);
+    if(before&&!game.pending&&!moving&&!lastMove.valueThreats){
+      lastMove.valueThreats=Chess10Material.newThreats(before,game);
+      lastMove.valueBubbleUntil=Date.now()+2000;
+      if(lastMove.valueThreats.length){const state=game;setTimeout(()=>{if(state===game&&!moving)render();},2100);}
+    }
+    if(!moving&&lastMove?.valueBubbleUntil>Date.now())for(const threat of lastMove.valueThreats||[]){
+      for(const [square,mark] of [[threat.from,'!'],[threat.to,'?']]){
+        const key=square.join(','),previous=valueBubbles.get(key)||'';
+        if(!previous.includes(mark))valueBubbles.set(key,previous+mark);
+      }
+    }
+  }
   const shouldAnimate=animatedGame===game&&game.history.length>animatedCount;
   animatedGame=game;animatedCount=game.history.length;
   board.replaceChildren();
@@ -108,9 +125,11 @@ function render(){
     button.className='square'+((r+c)%2?' dark':'')+(win?' win-threat':'')+(loss?' loss-threat':'')+(lastMove?.from[0]===r&&lastMove?.from[1]===c?' last-from':'')+(lastMove?.to[0]===r&&lastMove?.to[1]===c?' last-to':'')+(selected?.[0]===r&&selected?.[1]===c?' selected':'')+(available.some(([a,b])=>a===r&&b===c)?' possible':'');
     button.setAttribute('aria-label',notation(r,c)+(p?' '+colorName(p.color)+' '+names[p.type]:' 빈칸')+(win?' · 승리 가능한 기물':'')+(loss?' · 패배 위험 칸':''));
     if(p){const span=document.createElement('span');span.className='piece '+p.color;span.textContent=symbols[p.type];button.append(span);}
-    if(lastMove?.annotation&&lastMove.bubbleUntil>Date.now()&&lastMove.to[0]===r&&lastMove.to[1]===c&&!moving){
-      const bubble=document.createElement('span');bubble.className='move-comment '+(lastMove.annotation.mark.includes('?')?'mistake':'good');
-      bubble.textContent=lastMove.annotation.mark;bubble.title=lastMove.annotation.reason;
+    const threatMark=valueBubbles.get(key);
+    const annotation=threatMark?{mark:threatMark,reason:threatMark==='!'?'더 낮은 점수의 기물이 더 높은 점수의 적 기물을 포획할 수 있습니다.':threatMark==='?'?'더 낮은 점수의 적 기물에게 포획될 수 있습니다.':'더 높은 점수의 적을 공격하면서 더 낮은 점수의 적에게 공격받습니다.'}:lastMove?.annotation;
+    if(threatMark||annotation&&lastMove.bubbleUntil>Date.now()&&lastMove.to[0]===r&&lastMove.to[1]===c&&!moving){
+      const bubble=document.createElement('span');bubble.className='move-comment '+(annotation.mark.includes('?')?'mistake':'good');
+      bubble.textContent=lastMove.annotation.mark;bubble.title=annotation.reason;
       bubble.setAttribute('aria-label',lastMove.annotation.mark+' '+lastMove.annotation.reason);button.append(bubble);
     }
     button.onclick=()=>{

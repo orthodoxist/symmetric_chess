@@ -4,7 +4,7 @@
   "private": true,
   "description": "10×10 symmetric chess with browser AI",
   "scripts": {
-    "test": "node engine.test.js && node ai.test.js && node ai-ui.test.js && node review.test.js",
+    "test": "node engine.test.js && node ai.test.js && node ai-ui.test.js && node review.test.js && node material.test.js",
     "build": "node scripts/build-static.cjs"
   }
 }
