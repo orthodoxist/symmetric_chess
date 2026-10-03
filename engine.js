@@ -53,22 +53,9 @@
     } else if(p.type==='N') {
       for(const [a,b] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) add(r+a,c+b);
       for(const [a,b] of [[-3,-2],[-3,2],[-2,-3],[-2,3],[2,-3],[2,3],[3,-2],[3,2]]) add(r+a,c+b);
-    } else if(p.type==='B') {
-      for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
-        let screen=false;
-        for(let step=1;step<=9;step++){
-          const a=r+dr*step,b=c+dc*step;
-          if(!inside(a,b)) break;
-          if(!screen){
-            if(game.board[a][b]) screen=true;
-            continue;
-          }
-          add(a,b);
-        }
-      }
     } else {
       const straight=[[1,0],[-1,0],[0,1],[0,-1]], diagonal=[[1,1],[1,-1],[-1,1],[-1,-1]];
-      const dirs=p.type==='R'?straight:[...straight,...diagonal];
+      const dirs=p.type==='R'?straight:p.type==='B'?diagonal:[...straight,...diagonal];
       for(const [a,b] of dirs) for(let step=1;step<=(p.type==='K'?1:9);step++) if(!add(r+a*step,c+b*step)) break;
     }
     return result;
