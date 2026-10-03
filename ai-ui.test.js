@@ -43,12 +43,12 @@ function setup(){
   assert.equal(h.requests[0].options.level,'expert');assert.equal(h.requests[0].options.budgetMs,10000);
   h=setup();h.element('#human-color').value='black';h.element('#ai-level').value='expert';h.element('#start').onclick();h.run('game.clock.remaining.white=500');h.timers.shift()();
   assert.ok(h.requests[0].options.budgetMs<=400);
-  // Capture-threat bubbles must render without an AI move annotation.
+  // Only the capturing piece receives !; unrelated threats have no bubbles.
   h=setup();h.element('#game-mode').value='local';h.element('#start').onclick();
-  h.run("game.board[3][5]={type:'R',color:'white'};game.board[4][4]={type:'N',color:'black'};game.history.push({color:'black',type:'N',from:[2,7],to:[4,4],valueThreats:[{from:[3,5],to:[4,4]}],valueBubbleUntil:Date.now()+2000});render();");
+  h.run("game.board[3][5]={type:'R',color:'white'};game.history.push({color:'white',type:'R',capture:'N',from:[5,5],to:[3,5],captureBadge:true,valueBubbleUntil:Date.now()+2000});render();");
   assert.equal(h.element('#board').children.length,100);
-  assert.equal(h.element('#board').children[35].children.find(c=>c.className?.startsWith('move-comment')).textContent,'?');
-  assert.equal(h.element('#board').children[44].children.find(c=>c.className?.startsWith('move-comment')).textContent,'!');
+  assert.equal(h.element('#board').children[35].children.find(c=>c.className?.startsWith('move-comment')).textContent,'!');
+  assert.equal(h.element('#board').children.flatMap(e=>e.children).filter(e=>e.className?.startsWith('move-comment')).length,1);
   // Real animation lifecycle: input waits, restart cancels, stale completion is ignored.
   const animations=[];
   Element.prototype.getBoundingClientRect=function(){return {left:0,top:0,width:50,height:50};};

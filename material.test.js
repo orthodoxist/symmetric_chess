@@ -12,3 +12,12 @@ g=empty();g.board[5][5]={type:'B',color:'white'};g.board[2][2]={type:'Q',color:'
 g.board[9][1]=null;g.board[9][9]={type:'R',color:'black'};assert.ok(!M.captureThreats(g).some(t=>t.from.join()==='5,5'&&t.to.join()==='2,2'));
 g.winner='black';assert.deepEqual(M.captureThreats(g),[]);
 console.log('Passed: material totals, promotion, all capture values, next side only, blockers and legal defenses.');
+
+// Rook takes a knight: any equal/higher allied loss suppresses !.
+g=empty();g.board[5][5]={type:'R',color:'white'};g.board[5][7]={type:'N',color:'black'};assert.ok(E.move(g,5,5,5,7));const entry=g.history.at(-1);assert.equal(M.goodCapture(g,entry),true);
+g.board[5][9]={type:'R',color:'black'};assert.equal(M.goodCapture(g,entry),true); // Rook A (9) can be lost, less than captured knight (10).
+g.board[3][9]={type:'N',color:'white'};assert.equal(M.goodCapture(g,entry),false); // Other allied knight (10) can be captured.
+g.board[3][9]={type:'B',color:'white'};assert.equal(M.goodCapture(g,entry),true);
+g.board[3][9]={type:'Q',color:'white'};assert.equal(M.goodCapture(g,entry),false);
+assert.equal(M.goodCapture(g,{...entry,capture:null}),false);
+g.board[3][9]=null;g.board[7][9]={type:'K',color:'white'};assert.equal(M.goodCapture(g,entry),false);

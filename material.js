@@ -22,6 +22,16 @@
     }
     return result;
   }
-  const api={points,scores,captureThreats};
+  function goodCapture(game,entry){
+    const capturedValue=points[entry?.capture];
+    if(!capturedValue||game.pending||game.winner||game.draw)return false;
+    const piece=game.board[entry.to[0]]?.[entry.to[1]];
+    if(!piece||piece.color!==entry.color||game.turn===entry.color)return false;
+    return !captureThreats(game).some(t=>{
+      const target=game.board[t.to[0]][t.to[1]];
+      return target.type==='K'||points[target.type]>=capturedValue;
+    });
+  }
+  const api={points,scores,captureThreats,goodCapture};
   if(typeof module!=='undefined')module.exports=api;else root.Chess10Material=api;
 })(globalThis);

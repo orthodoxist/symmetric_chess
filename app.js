@@ -82,17 +82,12 @@ function render(){
     const totals=Chess10Material.scores(game);
     for(const color of ['white','black'])document.querySelector('#score-'+color).textContent=totals[color]+' / 100';
 
-    if(lastMove&&!game.pending&&!moving&&!lastMove.valueThreats){
-      lastMove.valueThreats=Chess10Material.captureThreats(game);
+    if(lastMove&&!game.pending&&!moving&&lastMove.captureBadge===undefined){
+      lastMove.captureBadge=Chess10Material.goodCapture(game,lastMove);
       lastMove.valueBubbleUntil=Date.now()+2000;
-      if(lastMove.valueThreats.length){const state=game;setTimeout(()=>{if(state===game&&!moving)render();},2100);}
+      if(lastMove.captureBadge){const state=game;setTimeout(()=>{if(state===game&&!moving)render();},2100);}
     }
-    if(!moving&&lastMove?.valueBubbleUntil>Date.now())for(const threat of lastMove.valueThreats||[]){
-      for(const [square,mark] of [[threat.from,'?'],[threat.to,'!']]){
-        const key=square.join(','),previous=valueBubbles.get(key)||'';
-        if(!previous.includes(mark))valueBubbles.set(key,previous+mark);
-      }
-    }
+    if(!moving&&lastMove?.captureBadge&&lastMove.valueBubbleUntil>Date.now())valueBubbles.set(lastMove.to.join(','),'!');
   }
   const shouldAnimate=animatedGame===game&&game.history.length>animatedCount;
   animatedGame=game;animatedCount=game.history.length;
@@ -105,8 +100,8 @@ function render(){
     if(p){const span=document.createElement('span');span.className='piece '+p.color;span.textContent=symbols[p.type];button.append(span);}
     const threatMark=valueBubbles.get(key);
     if(threatMark){
-      const reason=threatMark==='!'?'상대가 바로 다음 수에 이 기물을 포획할 수 있습니다.':'이번 수에 상대 기물을 포획할 수 있습니다.';
-      const bubble=document.createElement('span');bubble.className='move-comment '+(threatMark==='!'?'mistake':'good');
+      const reason='포획 후 상대가 다음 수에 잡을 수 있는 아군 기물이 없거나, 잡힌 적 기물보다 낮은 점수의 아군 기물만 잡을 수 있습니다.';
+      const bubble=document.createElement('span');bubble.className='move-comment good';
       bubble.textContent=threatMark;bubble.title=reason;
       bubble.setAttribute('aria-label',threatMark+' '+reason);button.append(bubble);
     }
