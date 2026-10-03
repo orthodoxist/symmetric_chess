@@ -129,8 +129,8 @@ function render(){
     const annotation=threatMark?{mark:threatMark,reason:threatMark==='!'?'더 낮은 점수의 기물이 더 높은 점수의 적 기물을 포획할 수 있습니다.':threatMark==='?'?'더 낮은 점수의 적 기물에게 포획될 수 있습니다.':'더 높은 점수의 적을 공격하면서 더 낮은 점수의 적에게 공격받습니다.'}:lastMove?.annotation;
     if(threatMark||annotation&&lastMove.bubbleUntil>Date.now()&&lastMove.to[0]===r&&lastMove.to[1]===c&&!moving){
       const bubble=document.createElement('span');bubble.className='move-comment '+(annotation.mark.includes('?')?'mistake':'good');
-      bubble.textContent=lastMove.annotation.mark;bubble.title=annotation.reason;
-      bubble.setAttribute('aria-label',lastMove.annotation.mark+' '+lastMove.annotation.reason);button.append(bubble);
+      bubble.textContent=annotation.mark;bubble.title=annotation.reason;
+      bubble.setAttribute('aria-label',annotation.mark+' '+annotation.reason);button.append(bubble);
     }
     button.onclick=()=>{
       syncClock();
