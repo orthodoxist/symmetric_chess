@@ -1,20 +1,20 @@
 (function(root){
-  // Rounded, original SVG pieces with the same silhouette for both sides.
+  // Reference-style contours, kept as vectors for consistent rendering on every device.
   const shapes={
-    P:'<circle cx="32" cy="16" r="8.5"/><path d="M24 27h16l-4 7c0 7 3 12 7 16H21c4-4 7-9 7-16z"/><path d="M24 27h16" fill="none"/>',
-    R:'<path d="M17 9h7v7h5V9h6v7h5V9h7v17H17zM23 26h18l-2 19 5 5H20l5-5z"/><path d="M19 22h26M25 43h14" fill="none"/>',
-    N:'<path d="M20 50c-1-9 4-17 12-23l-10 6-8-6 3-6 10-8 4-7 5 7c13 2 17 15 12 37z"/><path d="M36 17c7 6 10 13 8 23M17 25l5 1M25 17l4 2" fill="none"/><circle cx="34" cy="22" r="2.2" fill="INK" stroke="none"/>',
-    B:'<circle cx="32" cy="8" r="3.2"/><path d="M32 12c-7 6-13 12-13 20 0 6 6 10 13 10s13-4 13-10c0-8-6-14-13-20zM27 42h10l-1 4 8 4H20l8-4z"/><path d="M32 24v11M27 29.5h10" fill="none" stroke-width="2.6"/>',
-    Q:'<path d="M16 19l9 9-1-14 8 12 8-12-1 14 9-9-7 24H23zM24 43h16l-2 3 6 4H20l6-4z"/><circle cx="16" cy="16" r="3.2"/><circle cx="24" cy="11" r="3.2"/><circle cx="32" cy="9" r="3.2"/><circle cx="40" cy="11" r="3.2"/><circle cx="48" cy="16" r="3.2"/><path d="M24 38h16" fill="none"/>',
-    K:'<path d="M29 5h6v6h6v6h-6v7h-6v-7h-6v-6h6zM18 28c-3-8 8-12 14-4 6-8 17-4 14 4l-6 15H24zM24 43h16l-2 3 6 4H20l6-4z"/><path d="M32 27v12M25 39h14" fill="none"/>'
+    P:'<circle cx="32" cy="16" r="9"/><path d="M25 26h14q2 0 2 2t-2 2H25q-2 0-2-2t2-2zM28 30h8q-2 10 7 19H21q9-9 7-19z"/><path d="M22 46h20" fill="none"/>',
+    R:'<path d="M16 7h8v7h5V7h6v7h5V7h8v17H16zM20 24h24v5H20zM24 29h16l2 20H22z"/><path d="M19 20h26M26 32l-1 12" fill="none"/>',
+    N:'<path d="M20 49l1-7 8-9-5-3-5 3-6-4 2-5 7-7 6-3 2-8 6 5 5 1 6 7 2 9-1 9 3 12z"/><path d="M30 15l5 2M18 26l5 1M29 31l6-5 2-6M37 15l5 7 2 9-2 12" fill="none"/><path d="M19 30l3-3" fill="none"/><circle cx="30" cy="21" r="1.6" fill="INK" stroke="none"/>',
+    B:'<circle cx="32" cy="6" r="3"/><path d="M32 10c-4 3-16 12-16 23 0 7 7 11 16 11s16-4 16-11c0-11-12-20-16-23z"/><path d="M30 24h4v5h5v4h-5v5h-4v-5h-5v-4h5z" fill="LIGHT" stroke-width="1.4"/><path d="M25 44h14l4 5H21z"/>',
+    Q:'<path d="M12 20l8 24h24l8-24-13 15 6-22-13 20-13-20 6 22z"/><circle cx="12" cy="18" r="3"/><circle cx="19" cy="10" r="3"/><circle cx="32" cy="6" r="3"/><circle cx="45" cy="10" r="3"/><circle cx="52" cy="18" r="3"/><path d="M32 9v24M22 42h20M22 44h20v5H22z" fill="none"/>',
+    K:'<path d="M29 4h6v5h5v5h-5v7h-6v-7h-5V9h5z"/><path d="M32 22c-5-7-13-4-14 2-7-3-9 4-5 8 5 5 8 10 9 14h20c1-4 4-9 9-14 4-4 2-11-5-8-1-6-9-9-14-2z"/><path d="M21 29q5 4 7 14M32 25v18M43 29q-5 4-7 14M22 46h20v3H22z" fill="none"/>'
   };
   const cache=new Map();
   function url(type,color){
     if(!shapes[type]||!['white','black'].includes(color))throw Error('Unknown chess piece');
     const key=type+color;if(cache.has(key))return cache.get(key);
     const white=color==='white',ink='#20282d',light=white?'#fffef0':'#62696e',dark=white?'#d5e5d6':'#30373c';
-    const body=shapes[type].replaceAll('INK',ink);
-    const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="'+light+'"/><stop offset="1" stop-color="'+dark+'"/></linearGradient></defs><g fill="url(#body)" stroke="'+ink+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">'+body+'<path d="M21 50h22l5 6H16zM16 56h32v4H16z"/></g><path d="M19 57h26" stroke="'+light+'" stroke-width="1.4" stroke-linecap="round"/></svg>';
+    const body=shapes[type].replaceAll('INK',ink).replaceAll('LIGHT',light);
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="'+light+'"/><stop offset="1" stop-color="'+dark+'"/></linearGradient></defs><g fill="url(#body)" stroke="'+ink+'" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">'+body+'<path d="M22 49h20q3 0 3 4H19q0-4 3-4zM19 53h26l5 6H14z"/></g><path d="M18 57h28" stroke="'+light+'" stroke-width="1.3" stroke-linecap="round"/></svg>';
     const result='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);cache.set(key,result);return result;
   }
   const api={url};if(typeof module!=='undefined')module.exports=api;else root.Chess10Pieces=api;
