@@ -63,7 +63,7 @@
             if(game.board[a][b]) screen=true;
             continue;
           }
-          if(!add(a,b)) break;
+          add(a,b);
         }
       }
     } else {

@@ -84,18 +84,18 @@ for(const color of ['white','black'])for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0
   assert.deepEqual(moves(g,5,5),expected);
   assert.equal(move(g,5,5,5+dr,5+dc),false);assert.equal(move(g,5,5,5+dr*2,5+dc*2),false);
   const enemy=color==='white'?'black':'white';g.board[5+dr*4][5+dc*4]={type:'B',color:enemy};
-  assert.deepEqual(moves(g,5,5),[[5+dr*3,5+dc*3],[5+dr*4,5+dc*4]]);
+  assert.deepEqual(moves(g,5,5),expected);
   assert.ok(move(g,5,5,5+dr*4,5+dc*4));assert.equal(g.captured[enemy][0].type,'B');
   assert.equal(g.board[5+dr*2][5+dc*2].type,'B');
   g=bishopGame(color);g.board[5+dr][5+dc]={type:'P',color:enemy};g.board[5+dr*3][5+dc*3]={type:'R',color};
-  assert.deepEqual(moves(g,5,5),[[5+dr*2,5+dc*2]]);
+  assert.deepEqual(moves(g,5,5),Array.from({length:9},(_,i)=>i+2).map(step=>[5+dr*step,5+dc*step]).filter(([r,c])=>r>=0&&r<10&&c>=0&&c<10&&(r!==5+dr*3||c!==5+dc*3)));
 }
-g=bishopGame();g.board[5][6]={type:'P',color:'white'};g.board[5][7]={type:'N',color:'black'};assert.deepEqual(moves(g,5,5),[[5,7]]);
+g=bishopGame();g.board[5][6]={type:'P',color:'white'};g.board[5][7]={type:'N',color:'black'};assert.deepEqual(moves(g,5,5),[[5,7],[5,8],[5,9]]);
 g=bishopGame();g.board[4][4]={type:'P',color:'white'};assert.equal(move(g,5,5,3,3),false);
 g=bishopGame();g.board[5][5]=null;g.board[0][0]={type:'B',color:'white'};g.board[0][1]={type:'P',color:'white'};assert.equal(moves(g,0,0).length,8);
-g=createGame();assert.deepEqual(moves(g,9,2),[[7,2],[6,2],[5,2],[4,2],[3,2],[2,2],[1,2]]);
+g=createGame();assert.deepEqual(moves(g,9,2),[[7,2],[6,2],[5,2],[4,2],[3,2],[2,2],[1,2],[0,2]]);
 const originalBishop=baseline.createGame();originalBishop.board=Array.from({length:10},()=>Array(10).fill(null));originalBishop.board[5][5]={type:'B',color:'white'};assert.ok(baseline.moves(originalBishop,5,5).some(([r,c])=>r===4&&c===4));
-console.log('Passed: bishop screens required, orthogonal moves, all colors, bishop screens/captures, no second jump, friendly blockers, adjacent capture, edges, starting position, preserved original bishop.');
+console.log('Passed: bishop screens required, orthogonal moves, all colors, bishop screens/captures, unlimited further jumps, friendly destination exclusion, adjacent capture, edges, starting position, preserved original bishop.');
 const {winningThreats}=require('./engine.js');
 g=empty();g.board[1][4]={type:'R',color:'white'};assert.deepEqual(winningThreats(g).white,[]);
 g.board[0][5]=null;const before=JSON.stringify(g.board);assert.ok(winningThreats(g).white.some(t=>t.reason==='lastKing'));assert.equal(JSON.stringify(g.board),before);assert.equal(g.turn,'white');
@@ -186,3 +186,24 @@ assert.ok(move(g,1,8,0,8));assert.deepEqual(g.pending.choices,['K']);assert.equa
 g=empty();g.board[1][0]={type:'P',color:'white',moved:true};assert.ok(move(g,1,0,0,0));assert.equal(g.winner,'white');assert.equal(g.winReason,'promotion');
 g=promotionThreatPosition();const legalBefore=JSON.stringify({board:g.board,history:g.history,repetitions:[...g.repetitions]});moves(g,0,0);assert.equal(JSON.stringify({board:g.board,history:g.history,repetitions:[...g.repetitions]}),legalBefore);
 console.log('Passed: illegal king exposure, mandatory defense with all pieces, promotion-loss prevention, pawn capture/block defenses, legal promotion choices, promotion-caused stalemate, victory reasons, non-mutating legality.');
+
+// Any number of intervening pieces can be jumped; only the destination is captured.
+for(const color of ['white','black']) {
+  const enemy=color==='white'?'black':'white';
+  g=bishopGame(color);
+  g.board[5][6]={type:'P',color:enemy};
+  g.board[5][7]={type:'R',color};
+  g.board[5][8]={type:'N',color:enemy};
+  g.board[5][9]={type:'Q',color:enemy};
+  assert.deepEqual(moves(g,5,5),[[5,8],[5,9]]);
+  assert.ok(move(g,5,5,5,9));
+  assert.deepEqual(g.captured[enemy].map(p=>p.type),['Q']);
+  assert.equal(g.board[5][6].type,'P');
+  assert.equal(g.board[5][7].type,'R');
+  assert.equal(g.board[5][8].type,'N');
+}
+g=loneKingGame();g.board[5][0]={type:'B',color:'black'};g.board[5][1]={type:'P',color:'black'};g.board[5][3]={type:'R',color:'white'};
+assert.ok(winningThreats(g).black.some(t=>t.reason==='lastKing'&&t.to.join(',')==='5,5'));
+assert.ok(!moves(g,5,3).some(([r,c])=>r===6&&c===3));
+assert.ok(unsafeKingMoves(g).white.some(([r,c])=>r===5&&c===6));
+console.log('Passed: unlimited bishop jumps, distant captures preserve intervening pieces, last-king threats and legality.');
