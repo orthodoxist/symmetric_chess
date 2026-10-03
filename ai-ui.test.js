@@ -18,13 +18,14 @@ function setup(){
     Chess10AI:{chooseAction:async(state,options)=>new Promise(resolve=>requests.push({state,options,resolve}))}});
   vm.runInContext(fs.readFileSync('engine.js','utf8'),context);
   vm.runInContext(fs.readFileSync('material.js','utf8'),context);
+  vm.runInContext(fs.readFileSync('pieces.js','utf8'),context);
   vm.runInContext(fs.readFileSync('app.js','utf8'),context);
   return {element,timers,intervals,requests,run:code=>vm.runInContext(code,context),
     click:(r,c)=>element('#board').children[r*10+c].onclick(),
     async flush(){for(let i=0;i<8;i++)await Promise.resolve();}};
 }
 (async()=>{
-  let h=setup();assert.equal(h.element('#score-white').textContent,'100 / 100');assert.equal(h.element('#score-black').textContent,'100 / 100');assert.equal(h.element('#setup-screen').hidden,false);assert.equal(h.element('#match-screen').hidden,true);assert.equal(h.element('#restart').hidden,true);h.click(8,0);assert.equal(h.run('selected'),null);
+  let h=setup();assert.ok(h.element('#board').children[80].children[0].src.startsWith('data:image/svg+xml'));assert.notEqual(h.element('#board').children[80].children[0].src,h.element('#board').children[10].children[0].src);assert.equal(h.element('#score-white').textContent,'100 / 100');assert.equal(h.element('#score-black').textContent,'100 / 100');assert.equal(h.element('#setup-screen').hidden,false);assert.equal(h.element('#match-screen').hidden,true);assert.equal(h.element('#restart').hidden,true);h.click(8,0);assert.equal(h.run('selected'),null);
   h.element('#start').onclick();assert.equal(h.element('#setup-screen').hidden,true);assert.equal(h.element('#match-screen').hidden,false);assert.equal(h.element('#restart').hidden,false);h.click(8,0);h.click(7,0);assert.equal(h.run('game.turn'),'black');
   h.timers.shift()();assert.equal(h.requests.length,1);assert.equal(h.run('aiThinking'),true);
   h.click(1,0);assert.equal(h.run('selected'),null); // Human cannot play the computer's pieces.

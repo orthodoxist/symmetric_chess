@@ -1,4 +1,7 @@
-const symbols={R:'♜',N:'♞',B:'♝',Q:'♛',K:'♚',P:'♟'};
+function pieceImage(type,color){
+  const img=document.createElement('img');img.className='piece '+color;img.src=Chess10Pieces.url(type,color);
+  img.alt='';img.setAttribute('aria-hidden','true');img.draggable=false;return img;
+}
 const names={R:'룩',N:'나이트',B:'비숍',Q:'퀸',K:'킹',P:'폰'};
 const colorName=c=>c==='white'?'백':'흑';
 const notation=(r,c)=>String.fromCharCode(97+c)+(10-r);
@@ -16,7 +19,7 @@ function animateLastMove(entry){
   if(!piece?.animate)return;
   const a=from.getBoundingClientRect(),b=to.getBoundingClientRect();
   if(!a.width||!b.width)return;
-  piece.textContent=symbols[entry.type];
+  piece.src=Chess10Pieces.url(entry.type,entry.color);
   moving=true;const run=++movementRun;
   to.classList.add('moving-square');
   movement=piece.animate([{transform:'translate('+((a.left+a.width/2)-(b.left+b.width/2))+'px,'+((a.top+a.height/2)-(b.top+b.height/2))+'px)'},{transform:'translate(0,0)'}],{duration:360,easing:'cubic-bezier(.25,.7,.3,1)'});
@@ -97,7 +100,7 @@ function render(){
     const key=[r,c].join(','),win=winningSquares.has(key),loss=losingSquares.has(key);
     button.className='square'+((r+c)%2?' dark':'')+(win?' win-threat':'')+(loss?' loss-threat':'')+(lastMove?.from[0]===r&&lastMove?.from[1]===c?' last-from':'')+(lastMove?.to[0]===r&&lastMove?.to[1]===c?' last-to':'')+(selected?.[0]===r&&selected?.[1]===c?' selected':'')+(available.some(([a,b])=>a===r&&b===c)?' possible':'');
     button.setAttribute('aria-label',notation(r,c)+(p?' '+colorName(p.color)+' '+names[p.type]:' 빈칸')+(win?' · 승리 가능한 기물':'')+(loss?' · 패배 위험 칸':''));
-    if(p){const span=document.createElement('span');span.className='piece '+p.color;span.textContent=symbols[p.type];button.append(span);}
+    if(p)button.append(pieceImage(p.type,p.color));
     const threatMark=valueBubbles.get(key);
     if(threatMark){
       const reason='포획 후 상대가 다음 수에 잡을 수 있는 아군 기물이 없거나, 잡힌 적 기물보다 낮은 점수의 아군 기물만 잡을 수 있습니다.';
@@ -127,11 +130,15 @@ function render(){
   renderClocks();
 
   document.querySelector('#king-count').textContent=['white','black'].map(color=>colorName(color)+' 킹 '+game.board.flat().filter(p=>p?.color===color&&p.type==='K').length+'/2').join(' · ');
-  for(const color of ['white','black'])document.querySelector('#captured-'+color).textContent=game.captured[color].map(p=>symbols[p.type]).join(' ')||'—';
+  for(const color of ['white','black']){
+    const captured=document.querySelector('#captured-'+color);captured.replaceChildren();
+    if(!game.captured[color].length)captured.textContent='—';
+    for(const p of game.captured[color]){const img=pieceImage(p.type,p.color);img.alt=colorName(p.color)+' '+names[p.type];img.setAttribute('aria-hidden','false');img.title=img.alt;captured.append(img);}
+  }
   const history=document.querySelector('#history');history.replaceChildren();
   for(const entry of game.history){const li=document.createElement('li');li.textContent=`${colorName(entry.color)} ${names[entry.type]} ${notation(...entry.from)} → ${notation(...entry.to)}${entry.capture?' · '+names[entry.capture]+' 포획':''}${entry.promotion?' · '+names[entry.promotion]+' 프로모션':''}`;history.append(li);}
   history.scrollTop=history.scrollHeight;
-  if(!moving&&game.pending&&!computerTurn()){const choices=document.querySelector('#choices');choices.replaceChildren();for(const type of game.pending.choices){const b=document.createElement('button');b.textContent=symbols[type];b.setAttribute('aria-label',names[type]+'로 프로모션');b.onclick=()=>{syncClock();if(game.winner||game.draw||computerTurn())return;Chess10.promote(game,type);dialog.close();render();};choices.append(b);}if(!dialog.open)dialog.showModal();}
+  if(!moving&&game.pending&&!computerTurn()){const choices=document.querySelector('#choices');choices.replaceChildren();for(const type of game.pending.choices){const b=document.createElement('button');b.append(pieceImage(type,game.pending.color));b.setAttribute('aria-label',names[type]+'로 프로모션');b.onclick=()=>{syncClock();if(game.winner||game.draw||computerTurn())return;Chess10.promote(game,type);dialog.close();render();};choices.append(b);}if(!dialog.open)dialog.showModal();}
   if(!moving&&!aiThinking&&!aiError&&computerTurn()&&game.clock.started&&!game.winner&&!game.draw&&!game.pending)setTimeout(playComputer,120);
 }
 dialog.addEventListener('cancel',e=>e.preventDefault());
