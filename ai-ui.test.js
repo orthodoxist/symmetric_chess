@@ -38,5 +38,9 @@ function setup(){
   h.element('#start').onclick();h.timers.shift()();h.requests[0].resolve({from:[1,4],to:[0,4],promotion:'Q'});await h.flush();assert.equal(h.run('game.board[0][4].type'),'Q');assert.equal(h.element('#promotion').open,false);assert.equal(h.run('game.turn'),'black');
   h=setup();h.element('#time-control').value='30';h.element('#time-control').onchange();assert.equal(h.run('game.clock.remaining.white'),1800000);assert.equal(h.run('game.clock.started'),false);assert.equal(h.element('#match-screen').hidden,true);
   h.element('#start').onclick();assert.equal(h.run('game.clock.remaining.black'),1800000);assert.equal(h.element('#setup-screen').hidden,true);h.element('#restart').onclick();h.element('#time-control').value='45';h.element('#time-control').onchange();h.element('#start').onclick();assert.equal(h.run('game.clock.remaining.white'),2700000);assert.equal(h.element('#match-screen').hidden,false);
+  h=setup();h.element('#human-color').value='black';h.element('#ai-level').value='expert';h.element('#start').onclick();h.timers.shift()();
+  assert.equal(h.requests[0].options.level,'expert');assert.equal(h.requests[0].options.budgetMs,10000);
+  h=setup();h.element('#human-color').value='black';h.element('#ai-level').value='expert';h.element('#start').onclick();h.run('game.clock.remaining.white=500');h.timers.shift()();
+  assert.ok(h.requests[0].options.budgetMs<=400);
   console.log('Passed: setup/match screens, start gate, time selection, return to setup, human/computer turn ownership, automatic replies, settings locks, restart cancellation, computer first move, local mode, timeout during thinking, automatic computer promotion.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

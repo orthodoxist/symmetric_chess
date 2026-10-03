@@ -14,7 +14,7 @@ async function playComputer(){
   const run=++aiRun,state=game;
   aiThinking=true;selected=null;render();
   try{
-    const action=await Chess10AI.chooseAction(state,{level:aiLevel.value,budgetMs:Math.max(50,Math.min({easy:250,medium:900,hard:2000}[aiLevel.value],state.clock.remaining[state.turn]-100)),shouldCancel:()=>run!==aiRun||state!==game||Boolean(game.winner||game.draw)});
+    const action=await Chess10AI.chooseAction(state,{level:aiLevel.value,budgetMs:Math.max(50,Math.min({easy:250,medium:900,hard:2000,expert:10000}[aiLevel.value],state.clock.remaining[state.turn]-100)),shouldCancel:()=>run!==aiRun||state!==game||Boolean(game.winner||game.draw)});
     if(run!==aiRun||state!==game)return;
     syncClock();if(game.winner||game.draw)return;
     if(!action){
