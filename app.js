@@ -22,6 +22,29 @@ function animateLastMove(entry){
   movement=piece.animate([{transform:'translate('+((a.left+a.width/2)-(b.left+b.width/2))+'px,'+((a.top+a.height/2)-(b.top+b.height/2))+'px)'},{transform:'translate(0,0)'}],{duration:360,easing:'cubic-bezier(.25,.7,.3,1)'});
   movement.finished.then(()=>{if(run!==movementRun)return;moving=false;movement=null;to.classList.remove('moving-square');render();}).catch(()=>{});
 }
+let reviewQueue=Promise.resolve();
+const reviewPositions=new WeakMap();
+function performMove(state,r,c,a,b){
+  const before=typeof Chess10Review!=='undefined'?Chess10.copyGame(state):null;
+  if(!Chess10.move(state,r,c,a,b))return false;
+  if(before)reviewPositions.set(state.history.at(-1),before);
+  return true;
+}
+function queueReview(){
+  if(typeof Chess10Review==='undefined'||moving||game.pending)return;
+  const state=game,entry=state.history.at(-1),before=entry&&reviewPositions.get(entry);
+  if(!before||entry.reviewRequested)return;
+  entry.reviewRequested=true;const after=Chess10.copyGame(state);
+  reviewQueue=reviewQueue.catch(()=>{}).then(async()=>{
+    if(state!==game)return;
+    const annotation=await Chess10Review.reviewMove(before,entry,after,{shouldCancel:()=>state!==game});
+    if(state!==game||!annotation)return;
+    entry.annotation=annotation;
+    if(state.history.at(-1)===entry)entry.bubbleUntil=Date.now()+2000;
+    if(!moving)render();
+    setTimeout(()=>{if(state===game&&!moving)render();},2100);
+  }).catch(error=>console.error('Move review:',error));
+}
 const computerTurn=()=>gameMode.value==='ai'&&game.turn!==humanColor.value;
 function cancelAI(){aiRun++;aiThinking=false;aiError=false;}
 async function playComputer(){
@@ -37,7 +60,7 @@ async function playComputer(){
         game.winReason=Chess10.isCheckmate(game)?'checkmate':'stalemate';game.winner=humanColor.value;
       }else throw new Error('Computer returned no move.');
     }else{
-      if(!Chess10.move(game,...action.from,...action.to))throw new Error('Computer returned an illegal move.');
+      if(!performMove(game,...action.from,...action.to))throw new Error('Computer returned an illegal move.');
       if(game.pending&&!Chess10.promote(game,action.promotion))throw new Error('Computer returned an illegal promotion.');
     }
   }catch(error){
@@ -85,11 +108,16 @@ function render(){
     button.className='square'+((r+c)%2?' dark':'')+(win?' win-threat':'')+(loss?' loss-threat':'')+(lastMove?.from[0]===r&&lastMove?.from[1]===c?' last-from':'')+(lastMove?.to[0]===r&&lastMove?.to[1]===c?' last-to':'')+(selected?.[0]===r&&selected?.[1]===c?' selected':'')+(available.some(([a,b])=>a===r&&b===c)?' possible':'');
     button.setAttribute('aria-label',notation(r,c)+(p?' '+colorName(p.color)+' '+names[p.type]:' 빈칸')+(win?' · 승리 가능한 기물':'')+(loss?' · 패배 위험 칸':''));
     if(p){const span=document.createElement('span');span.className='piece '+p.color;span.textContent=symbols[p.type];button.append(span);}
+    if(lastMove?.annotation&&lastMove.bubbleUntil>Date.now()&&lastMove.to[0]===r&&lastMove.to[1]===c&&!moving){
+      const bubble=document.createElement('span');bubble.className='move-comment '+(lastMove.annotation.mark.includes('?')?'mistake':'good');
+      bubble.textContent=lastMove.annotation.mark;bubble.title=lastMove.annotation.reason;
+      bubble.setAttribute('aria-label',lastMove.annotation.mark+' '+lastMove.annotation.reason);button.append(bubble);
+    }
     button.onclick=()=>{
       syncClock();
       if(moving||!game.clock.started||game.winner||game.draw||game.pending||computerTurn())return;
       if(selected?.[0]===r&&selected?.[1]===c)selected=null;
-      else if(selected&&Chess10.move(game,...selected,r,c))selected=null;
+      else if(selected&&performMove(game,...selected,r,c))selected=null;
       else selected=p?.color===game.turn?[r,c]:null;
       render();
     };
@@ -109,8 +137,9 @@ function render(){
   document.querySelector('#king-count').textContent=['white','black'].map(color=>colorName(color)+' 킹 '+game.board.flat().filter(p=>p?.color===color&&p.type==='K').length+'/2').join(' · ');
   for(const color of ['white','black'])document.querySelector('#captured-'+color).textContent=game.captured[color].map(p=>symbols[p.type]).join(' ')||'—';
   const history=document.querySelector('#history');history.replaceChildren();
-  for(const entry of game.history){const li=document.createElement('li');li.textContent=`${colorName(entry.color)} ${names[entry.type]} ${notation(...entry.from)} → ${notation(...entry.to)}${entry.capture?' · '+names[entry.capture]+' 포획':''}${entry.promotion?' · '+names[entry.promotion]+' 프로모션':''}`;history.append(li);}
+  for(const entry of game.history){const li=document.createElement('li');li.textContent=`${colorName(entry.color)} ${names[entry.type]} ${notation(...entry.from)} → ${notation(...entry.to)}${entry.capture?' · '+names[entry.capture]+' 포획':''}${entry.promotion?' · '+names[entry.promotion]+' 프로모션':''}${entry.annotation?' '+entry.annotation.mark:''}`;if(entry.annotation)li.title=entry.annotation.reason;history.append(li);}
   history.scrollTop=history.scrollHeight;
+  queueReview();
   if(!moving&&game.pending&&!computerTurn()){const choices=document.querySelector('#choices');choices.replaceChildren();for(const type of game.pending.choices){const b=document.createElement('button');b.textContent=symbols[type];b.setAttribute('aria-label',names[type]+'로 프로모션');b.onclick=()=>{syncClock();if(game.winner||game.draw||computerTurn())return;Chess10.promote(game,type);dialog.close();render();};choices.append(b);}if(!dialog.open)dialog.showModal();}
   if(!moving&&!aiThinking&&!aiError&&computerTurn()&&game.clock.started&&!game.winner&&!game.draw&&!game.pending)setTimeout(playComputer,120);
 }

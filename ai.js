@@ -38,7 +38,7 @@ function applyAction(g,a){
  if(next.winner)next.turn=color==='white'?'black':'white';
  return next;
 }
-async function chooseAction(game,{level='medium',budgetMs,random=Math.random,shouldCancel=()=>false,onIteration=()=>{}}={}){
+async function chooseAction(game,{level='medium',budgetMs,random=Math.random,shouldCancel=()=>false,onIteration=()=>{},exactRoot=false}={}){
  if(game.winner||game.draw||game.pending)return null;
  const settings={easy:{depth:1,budget:250,width:8},medium:{depth:2,budget:900,width:12},hard:{depth:3,budget:2000,width:18},expert:{depth:12,budget:10000,width:Infinity}};
  const config=settings[level]||settings.medium,advanced=level==='expert',deadline=Date.now()+(budgetMs??config.budget),STOP=Symbol('stop'),table=new Map();
@@ -89,13 +89,13 @@ async function chooseAction(game,{level='medium',budgetMs,random=Math.random,sho
  try{
   // Always complete legal fallback generation while yielding and cancelling.
   const candidates=await actions(game,true);if(!candidates.length)return null;let best=candidates[0].action;
-  for(const c of candidates)if(c.child.winner===game.turn)return c.action;
+  for(const c of candidates)if(c.child.winner===game.turn&&!exactRoot)return c.action;
   if(level==='easy'){const top=candidates.slice(0,5);return top[Math.min(top.length-1,Math.floor(random()*top.length))].action;}
   for(let depth=1;depth<=config.depth;depth++){
-   let nextBest=best,score=-Infinity;candidates.sort((a,b)=>(actionKey(b.action)===actionKey(best))-(actionKey(a.action)===actionKey(best))||b.order-a.order);
+   let nextBest=best,score=-Infinity;const scores=[];candidates.sort((a,b)=>(actionKey(b.action)===actionKey(best))-(actionKey(a.action)===actionKey(best))||b.order-a.order);
    try{
-    for(const c of candidates){const value=-(await search(c.child,depth-1,-Infinity,-score));if(value>score){score=value;nextBest=c.action;}await cooperate();}
-    best=nextBest;onIteration({depth,nodes,score});if(score>=WIN)break;
+    for(const c of candidates){const value=-(await search(c.child,depth-1,-Infinity,exactRoot?Infinity:-score));scores.push({action:c.action,score:value});if(value>score){score=value;nextBest=c.action;}await cooperate();}
+    best=nextBest;onIteration({depth,nodes,score,...(exactRoot?{scores}:{})});if(score>=WIN)break;
    }catch(e){if(e!==STOP)throw e;break;}
   }
   return shouldCancel()?null:best;
