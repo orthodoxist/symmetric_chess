@@ -123,4 +123,10 @@ humanColor.onchange=()=>{if(!game.clock.started){cancelAI();selected=null;render
 aiLevel.onchange=()=>{if(!game.clock.started){cancelAI();render();}};
 setInterval(syncClock,100);
 document.addEventListener('visibilitychange',syncClock);
+document.addEventListener('contextmenu',event=>{
+  if(!selected)return;
+  event.preventDefault();
+  selected=null;
+  render();
+});
 render();
