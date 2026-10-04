@@ -252,3 +252,4 @@ document.querySelector('#info-tab').onclick=()=>{infoOpen=!infoOpen;if(infoOpen)
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&boardFocus&&infoOpen){infoOpen=false;render();}});
 
 document.querySelector('#chat-form').onsubmit=event=>{event.preventDefault();const input=document.querySelector('#chat-input');if(onlineSession?.sendChat(input.value)){input.value='';renderChat();}else document.querySelector('#chat-status').textContent='전송하지 못했습니다. 연결을 확인하고 잠시 후 다시 보내주세요.';};
+document.querySelector('#rules-toggle').onclick=()=>{const rules=document.querySelector('#game-rules');rules.hidden=!rules.hidden;document.querySelector('#rules-toggle').setAttribute('aria-expanded',String(!rules.hidden));};
