@@ -263,3 +263,8 @@ document.querySelector('#rules-toggle').onclick=()=>{const rules=document.queryS
 
 document.querySelector('#overview-tab').onclick=()=>{panelPage='overview';renderChat();};
 document.querySelector('#chat-tab').onclick=()=>{panelPage='chat';chatUnread=0;renderChat();};
+
+if(typeof ResizeObserver!=='undefined'){
+  const sizePanel=()=>{const height=board.getBoundingClientRect().height;if(height>0)document.querySelector('#match-info').style.setProperty('--board-height',height+'px');};
+  new ResizeObserver(sizePanel).observe(board);
+}
