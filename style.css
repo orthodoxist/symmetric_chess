@@ -28,7 +28,7 @@
 .setup-screen>.card:first-child{grid-column:1}
 .setup-screen>.card{margin:0}
 .setup-screen .start-game{margin-top:6px;background:#426b5e;border-color:#81b8aa;padding:13px;font-weight:600}
-.match-time #match-summary{margin-bottom:12px}
+.match-time #match-summary{margin-bottom:10px;line-height:1.5}.match-time .match-time-label{margin-bottom:12px}
 @media(max-width:700px){.setup-screen{grid-template-columns:1fr}.setup-screen>.card:first-child{grid-column:auto;grid-row:auto}}
 
 /* Persistent last move outlines preserve red/green warning backgrounds. */
