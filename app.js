@@ -150,7 +150,27 @@ function renderChat(){
 }
 
 let boardFocus=false,infoOpen=false;
+let reviewOwner=null,reviewIndex=null,reviewKey='',reviewPositions=[];
+function reviewState(){
+  if(reviewOwner!==game){reviewOwner=game;reviewIndex=null;reviewKey='';reviewPositions=[];}
+  if(reviewIndex===null)return game;
+  const key=JSON.stringify(game.history.map(({from,to,promotion})=>({from,to,promotion})));
+  if(key!==reviewKey){
+    const replay=Chess10.createGame(Number(timeControl.value));replay.clock.started=true;
+    reviewPositions=[Chess10.copyGame(replay)];
+    for(const entry of game.history){replay.winner=null;replay.draw=null;Chess10.move(replay,...entry.from,...entry.to,false);if(entry.promotion)Chess10.promote(replay,entry.promotion,false);reviewPositions.push(Chess10.copyGame(replay));}
+    reviewKey=key;
+  }
+  reviewIndex=Math.min(reviewIndex,game.history.length);
+  return reviewPositions[reviewIndex];
+}
+function turnLabel(state){
+  const mine=onlineMode()?onlineSession?.color:humanColor.value;
+  return colorName(state.turn)+(state.turn===mine?'(나)':'(상대방)')+'의 차례';
+}
+
 function render(){
+  const view=reviewState(),reviewing=reviewIndex!==null;
   if(!game.clock.started){boardFocus=false;infoOpen=false;}
   document.querySelector('main').classList.toggle('board-focus',boardFocus);
   document.querySelector('main').classList.toggle('info-open',boardFocus&&infoOpen);
@@ -162,25 +182,28 @@ function render(){
   document.querySelector('#match-screen').hidden=!game.clock.started;
   document.querySelector('#restart').hidden=!game.clock.started;
   document.querySelector('#match-summary').textContent=(onlineMode()?'온라인 대결':gameMode.value==='ai'?'컴퓨터 대결 · '+difficultyName():'혼자 연습')+' · 각 '+timeControl.value+'분 + 0초';
-  const available=selected?Chess10.moves(game,...selected):[];
-  const {winning:winningSquares,losing:losingSquares}=boardHighlights();
-  const lastMove=game.history.at(-1);
+  const available=!reviewing&&selected?Chess10.moves(game,...selected):[];
+  const savedHighlights=[highlightGame,lastHighlights];
+  const liveGame=game;let colors;
+  if(reviewing){game=view;try{colors=boardHighlights();}finally{game=liveGame;[highlightGame,lastHighlights]=savedHighlights;}}else colors=boardHighlights();
+  const {winning:winningSquares,losing:losingSquares}=colors;
+  const lastMove=view.history.at(-1);
   const valueBubbles=new Map();
   if(typeof Chess10Material!=='undefined'){
-    const totals=Chess10Material.scores(game);
+    const totals=Chess10Material.scores(view);
     for(const color of ['white','black'])document.querySelector('#score-'+color).textContent=totals[color]+' / 100';
 
-    if(lastMove&&!game.pending&&!moving&&lastMove.captureBadge===undefined){
+    if(!reviewing&&lastMove&&!game.pending&&!moving&&lastMove.captureBadge===undefined){
       lastMove.captureBadge=Chess10Material.goodCapture(game,lastMove);
       lastMove.valueBubbleUntil=Date.now()+2000;
       if(lastMove.captureBadge){const state=game;setTimeout(()=>{if(state===game&&!moving)render();},2100);}
     }
-    if(!moving&&lastMove?.captureBadge&&lastMove.valueBubbleUntil>Date.now())valueBubbles.set(lastMove.to.join(','),'!');
+    if(!reviewing&&!moving&&lastMove?.captureBadge&&lastMove.valueBubbleUntil>Date.now())valueBubbles.set(lastMove.to.join(','),'!');
   }
-  const shouldAnimate=animatedGame===game&&game.history.length>animatedCount;
+  const shouldAnimate=!reviewing&&animatedGame===game&&game.history.length>animatedCount;
   animatedGame=game;animatedCount=game.history.length;
   board.replaceChildren();
-  game.board.forEach((row,r)=>row.forEach((p,c)=>{
+  view.board.forEach((row,r)=>row.forEach((p,c)=>{
     const button=document.createElement('button');
     const key=[r,c].join(','),win=winningSquares.has(key),loss=losingSquares.has(key);
     button.className='square'+((r+c)%2?' dark':'')+(win?' win-threat':'')+(loss?' loss-threat':'')+(lastMove?.from[0]===r&&lastMove?.from[1]===c?' last-from':'')+(lastMove?.to[0]===r&&lastMove?.to[1]===c?' last-to':'')+(selected?.[0]===r&&selected?.[1]===c?' selected':'')+(available.some(([a,b])=>a===r&&b===c)?' possible':'');
@@ -195,7 +218,7 @@ function render(){
     }
     button.onclick=()=>{
       syncClock();
-      if(moving||!game.clock.started||game.winner||game.draw||game.pending||computerTurn()||onlineMode()&&!ownOnlineTurn())return;
+      if(reviewIndex!==null||moving||!game.clock.started||game.winner||game.draw||game.pending||computerTurn()||onlineMode()&&!ownOnlineTurn())return;
       if(selected?.[0]===r&&selected?.[1]===c)selected=null;
       else if(selected&&performMove(game,...selected,r,c))selected=null;
       else selected=p?.color===game.turn?[r,c]:null;
@@ -205,7 +228,11 @@ function render(){
   }));
   if(shouldAnimate)animateLastMove(lastMove);
   const victoryNames={checkmate:'체크메이트 승리',stalemate:'스테일메이트 승리',promotion:'프로모션 승리',timeout:'시간승',kingCapture:'킹 포획 승리',resign:'기권승'};
-  document.querySelector('#status').textContent=game.winner?colorName(game.winner)+' 승리! · '+(victoryNames[game.winReason]||'승리')+(gameMode.value==='ai'?' · 컴퓨터 난이도: '+difficultyName():''):game.draw?'무승부 · '+(game.draw==='repetition'?'3회 반복':'30수 규칙'):!game.clock.started?'시간을 선택하고 대국을 시작하세요':game.pending?colorName(game.turn)+' · 프로모션 선택':colorName(game.turn)+'의 차례';
+  document.querySelector('#status').textContent=game.winner?colorName(game.winner)+' 승리! · '+(victoryNames[game.winReason]||'승리')+(gameMode.value==='ai'?' · 컴퓨터 난이도: '+difficultyName():''):game.draw?'무승부 · '+(game.draw==='repetition'?'3회 반복':'30수 규칙'):!game.clock.started?'시간을 선택하고 대국을 시작하세요':game.pending?colorName(game.turn)+' · 프로모션 선택':turnLabel(game);
+  const positionNumber=reviewing?reviewIndex:game.history.length;
+  const marker=positionNumber===0?'first':!reviewing?'last':'';
+  if(reviewing)document.querySelector('#status').textContent=turnLabel(view);
+  if(game.clock.started)document.querySelector('#status').textContent+=' · '+positionNumber+'수'+(marker?' · '+marker:'')+(reviewing?' · 기록 보기':'');
   document.querySelector('#online-controls').hidden=!onlineMode();
   document.querySelector('#online-status').textContent=onlineMessage;
   document.querySelector('#create-room').disabled=onlineConnecting||Boolean(onlineSession);
@@ -220,16 +247,16 @@ function render(){
   renderClocks();
   renderChat();
 
-  document.querySelector('#king-count').textContent=['white','black'].map(color=>colorName(color)+' 킹 '+game.board.flat().filter(p=>p?.color===color&&p.type==='K').length+'/2').join(' · ');
+  document.querySelector('#king-count').textContent=['white','black'].map(color=>colorName(color)+' 킹 '+view.board.flat().filter(p=>p?.color===color&&p.type==='K').length+'/2').join(' · ');
   for(const color of ['white','black']){
     const captured=document.querySelector('#captured-'+color);captured.replaceChildren();
-    if(!game.captured[color].length)captured.textContent='—';
-    for(const p of game.captured[color]){const img=pieceImage(p.type,p.color);img.alt=colorName(p.color)+' '+names[p.type];img.setAttribute('aria-hidden','false');img.title=img.alt;captured.append(img);}
+    if(!view.captured[color].length)captured.textContent='—';
+    for(const p of view.captured[color]){const img=pieceImage(p.type,p.color);img.alt=colorName(p.color)+' '+names[p.type];img.setAttribute('aria-hidden','false');img.title=img.alt;captured.append(img);}
   }
   const history=document.querySelector('#history');history.replaceChildren();
   for(const entry of game.history){const li=document.createElement('li');li.textContent=`${colorName(entry.color)} ${names[entry.type]} ${notation(...entry.from)} → ${notation(...entry.to)}${entry.capture?' · '+names[entry.capture]+' 포획':''}${entry.promotion?' · '+names[entry.promotion]+' 프로모션':''}`;history.append(li);}
   history.scrollTop=history.scrollHeight;
-  if(!moving&&game.pending&&!computerTurn()&&(!onlineMode()||ownOnlineTurn())){const choices=document.querySelector('#choices');choices.replaceChildren();for(const type of game.pending.choices){const b=document.createElement('button');b.append(pieceImage(type,game.pending.color));b.setAttribute('aria-label',names[type]+'로 프로모션');b.onclick=()=>{syncClock();if(game.winner||game.draw||computerTurn()||onlineMode()&&!ownOnlineTurn())return;promotePiece(type);dialog.close();render();};choices.append(b);}if(!dialog.open)dialog.showModal();}
+  if(!reviewing&&!moving&&game.pending&&!computerTurn()&&(!onlineMode()||ownOnlineTurn())){const choices=document.querySelector('#choices');choices.replaceChildren();for(const type of game.pending.choices){const b=document.createElement('button');b.append(pieceImage(type,game.pending.color));b.setAttribute('aria-label',names[type]+'로 프로모션');b.onclick=()=>{syncClock();if(game.winner||game.draw||computerTurn()||onlineMode()&&!ownOnlineTurn())return;promotePiece(type);dialog.close();render();};choices.append(b);}if(!dialog.open)dialog.showModal();}
   if(!moving&&!aiThinking&&!aiError&&computerTurn()&&game.clock.started&&!game.winner&&!game.draw&&!game.pending)setTimeout(playComputer,120);
 }
 dialog.addEventListener('cancel',e=>e.preventDefault());
@@ -280,4 +307,12 @@ document.addEventListener('keydown',event=>{
 window.addEventListener?.('beforeunload',event=>{
   if(!activeMatch()||navigationApproved)return;
   event.preventDefault();event.returnValue='';
+});
+document.addEventListener('keydown',event=>{
+  if(!(event.ctrlKey||event.metaKey)||event.altKey||!['z','y'].includes(event.key.toLowerCase())||!game.clock.started)return;
+  const target=event.target;if(target?.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(target?.tagName))return;
+  event.preventDefault();reviewState();cancelMovement();selected=null;dialog.close();
+  if(event.key.toLowerCase()==='z')reviewIndex=Math.max(0,(reviewIndex===null?game.history.length:reviewIndex)-1);
+  else if(reviewIndex!==null){reviewIndex++;if(reviewIndex>=game.history.length)reviewIndex=null;}
+  render();
 });
