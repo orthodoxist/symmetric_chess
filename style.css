@@ -78,7 +78,7 @@ main:has(#setup-screen:not([hidden])) header{justify-content:center;text-align:c
 /* Match the label and button writing modes to avoid mixed-mode baselines. */
 #info-tab{display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.25;-webkit-appearance:none;appearance:none}
 #info-tab-label{display:block;writing-mode:inherit;line-height:1.25;margin:0;padding:0}
-html[lang="en"] #info-tab{writing-mode:horizontal-tb}
+#info-tab{writing-mode:horizontal-tb}
 
 .match-overview .match-score{border-top:0}
 
