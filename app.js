@@ -166,7 +166,7 @@ function reviewState(){
 }
 function turnLabel(state){
   const mine=onlineMode()?onlineSession?.color:humanColor.value;
-  return colorName(state.turn)+(state.turn===mine?'(나)':'(상대방)')+'의 차례';
+  return colorName(state.turn)+'의 차례';
 }
 
 function render(){
@@ -230,9 +230,9 @@ function render(){
   const victoryNames={checkmate:'체크메이트 승리',stalemate:'스테일메이트 승리',promotion:'프로모션 승리',timeout:'시간승',kingCapture:'킹 포획 승리',resign:'기권승'};
   document.querySelector('#status').textContent=game.winner?colorName(game.winner)+' 승리! · '+(victoryNames[game.winReason]||'승리')+(gameMode.value==='ai'?' · 컴퓨터 난이도: '+difficultyName():''):game.draw?'무승부 · '+(game.draw==='repetition'?'3회 반복':'30수 규칙'):!game.clock.started?'시간을 선택하고 대국을 시작하세요':game.pending?colorName(game.turn)+' · 프로모션 선택':turnLabel(game);
   const positionNumber=reviewing?reviewIndex:game.history.length;
-  const marker=positionNumber===0?'first':!reviewing?'last':'';
+
   if(reviewing)document.querySelector('#status').textContent=turnLabel(view);
-  if(game.clock.started)document.querySelector('#status').textContent+=' · '+positionNumber+'수'+(marker?' · '+marker:'')+(reviewing?' · 기록 보기':'');
+  if(game.clock.started)document.querySelector('#status').textContent+=' · '+positionNumber+'수'+(reviewing?' · 기록 보기':'');
   document.querySelector('#online-controls').hidden=!onlineMode();
   document.querySelector('#online-status').textContent=onlineMessage;
   document.querySelector('#create-room').disabled=onlineConnecting||Boolean(onlineSession);
