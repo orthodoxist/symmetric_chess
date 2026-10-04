@@ -144,7 +144,9 @@ function renderChat(){
   const connected=Boolean(onlineSession?.ready&&onlineSession.conn?.open&&!onlineSession.closed);
   document.querySelector('#chat-input').disabled=!connected;document.querySelector('#chat-send').disabled=!connected;
   document.querySelector('#chat-status').textContent=connected?'Enter 또는 보내기로 전송합니다.':'상대와 연결되면 채팅할 수 있습니다.';
-  if(boardFocus)document.querySelector('#info-tab').textContent=infoOpen?'정보 닫기':'대국 정보'+(chatUnread?' ('+chatUnread+')':'');
+  document.querySelector('#info-tab-label').textContent=infoOpen?'정보 닫기':'대국 정보';
+  const badge=document.querySelector('#chat-badge');badge.hidden=!boardFocus||infoOpen||!chatUnread;badge.textContent=String(chatUnread);
+  document.querySelector('#info-tab').setAttribute('aria-label',(infoOpen?'정보 닫기':'대국 정보')+(chatUnread?' · 새 채팅 '+chatUnread+'개':''));
 }
 
 let boardFocus=false,infoOpen=false;
@@ -154,7 +156,7 @@ function render(){
   document.querySelector('main').classList.toggle('info-open',boardFocus&&infoOpen);
   const focusButton=document.querySelector('#board-focus'),infoTab=document.querySelector('#info-tab');
   focusButton.hidden=!game.clock.started;focusButton.textContent=boardFocus?'기본 화면으로':'체스판 크게 보기';focusButton.setAttribute('aria-pressed',String(boardFocus));
-  infoTab.hidden=!boardFocus;infoTab.textContent=infoOpen?'정보 닫기':'대국 정보';infoTab.setAttribute('aria-expanded',String(infoOpen));
+  infoTab.hidden=!boardFocus;document.querySelector('#info-tab-label').textContent=infoOpen?'정보 닫기':'대국 정보';infoTab.setAttribute('aria-expanded',String(infoOpen));
   document.querySelector('#match-info').hidden=boardFocus&&!infoOpen;
   document.querySelector('#setup-screen').hidden=game.clock.started;
   document.querySelector('#match-screen').hidden=!game.clock.started;
