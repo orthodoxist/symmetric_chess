@@ -81,3 +81,5 @@ main:has(#setup-screen:not([hidden])) header{justify-content:center;text-align:c
 html[lang="en"] #info-tab{writing-mode:horizontal-tb}
 
 .match-overview .match-score{border-top:0}
+
+.match-overview .match-captured{padding-top:8px}
