@@ -291,7 +291,34 @@ document.querySelector('#copy-invite').onclick=async()=>{const link=document.que
 if(typeof location!=='undefined'){const room=new URL(location.href).searchParams.get('room');if(room){gameMode.value='online';document.querySelector('#room-code').value=room;render();}}
 
 document.querySelector('#board-focus').onclick=()=>{cancelMovement();boardFocus=!boardFocus;infoOpen=false;render();};
-document.querySelector('#info-tab').onclick=()=>{infoOpen=!infoOpen;if(infoOpen&&panelPage==='chat')chatUnread=0;render();};
+let infoDrag=null,infoDragMoved=false,infoPosition=null;
+const infoControl=document.querySelector('#info-tab');
+function placeInfoControl(){
+  if(!infoPosition||!infoControl.getBoundingClientRect)return;
+  const rect=infoControl.getBoundingClientRect();
+  infoPosition.x=Math.max(8,Math.min(infoPosition.x,window.innerWidth-rect.width-8));
+  infoPosition.y=Math.max(8,Math.min(infoPosition.y,window.innerHeight-rect.height-8));
+  Object.assign(infoControl.style,{position:'fixed',left:infoPosition.x+'px',top:infoPosition.y+'px',right:'auto',bottom:'auto',transform:'none',margin:'0'});
+}
+infoControl.addEventListener('pointerdown',event=>{
+  if(event.button!==0||event.target.closest?.('.chat-badge'))return;
+  const rect=infoControl.getBoundingClientRect();infoDragMoved=false;
+  infoDrag={id:event.pointerId,x:event.clientX,y:event.clientY,left:rect.left,top:rect.top};
+  infoControl.setPointerCapture(event.pointerId);
+});
+infoControl.addEventListener('pointermove',event=>{
+  if(!infoDrag||event.pointerId!==infoDrag.id)return;
+  const dx=event.clientX-infoDrag.x,dy=event.clientY-infoDrag.y;
+  if(!infoDragMoved&&Math.hypot(dx,dy)<8)return;
+  infoDragMoved=true;infoPosition={x:infoDrag.left+dx,y:infoDrag.top+dy};placeInfoControl();
+});
+for(const name of ['pointerup','pointercancel'])infoControl.addEventListener(name,event=>{
+  if(infoDrag?.id!==event.pointerId)return;
+  infoDrag=null;if(infoControl.hasPointerCapture(event.pointerId))infoControl.releasePointerCapture(event.pointerId);
+  if(name==='pointercancel')infoDragMoved=false;
+});
+window.addEventListener?.('resize',placeInfoControl);
+infoControl.onclick=()=>{if(infoDragMoved){infoDragMoved=false;return;}infoOpen=!infoOpen;if(infoOpen&&panelPage==='chat')chatUnread=0;render();};
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&boardFocus&&infoOpen){infoOpen=false;render();}});
 
 document.querySelector('#chat-form').onsubmit=event=>{event.preventDefault();const input=document.querySelector('#chat-input');if(onlineSession?.sendChat(input.value)){input.value='';renderChat();}else document.querySelector('#chat-status').textContent=t('전송하지 못했습니다. 연결을 확인하고 잠시 후 다시 보내주세요.');};
