@@ -126,7 +126,15 @@ function boardHighlights(){
   return {winning,losing};
 }
 
+let boardFocus=false,infoOpen=false;
 function render(){
+  if(!game.clock.started){boardFocus=false;infoOpen=false;}
+  document.querySelector('main').classList.toggle('board-focus',boardFocus);
+  document.querySelector('main').classList.toggle('info-open',boardFocus&&infoOpen);
+  const focusButton=document.querySelector('#board-focus'),infoTab=document.querySelector('#info-tab');
+  focusButton.hidden=!game.clock.started;focusButton.textContent=boardFocus?'기본 화면으로':'체스판 크게 보기';focusButton.setAttribute('aria-pressed',String(boardFocus));
+  infoTab.hidden=!boardFocus;infoTab.textContent=infoOpen?'정보 닫기':'대국 정보';infoTab.setAttribute('aria-expanded',String(infoOpen));
+  document.querySelector('#match-info').hidden=boardFocus&&!infoOpen;
   document.querySelector('#setup-screen').hidden=game.clock.started;
   document.querySelector('#match-screen').hidden=!game.clock.started;
   document.querySelector('#restart').hidden=!game.clock.started;
@@ -222,3 +230,7 @@ document.querySelector('#join-room').onclick=()=>openOnline(false);
 document.querySelector('#leave-room').onclick=()=>{if(game.clock.started)return;closeOnline();game=Chess10.createGame(Number(timeControl.value));selected=null;render();};
 document.querySelector('#copy-invite').onclick=async()=>{const link=document.querySelector('#invite-link');if(!link.value)return;try{await navigator.clipboard.writeText(link.value);document.querySelector('#online-status').textContent='초대 링크를 복사했습니다.';}catch{link.select();document.querySelector('#online-status').textContent='선택된 링크를 복사해주세요.';}};
 if(typeof location!=='undefined'){const room=new URL(location.href).searchParams.get('room');if(room){gameMode.value='online';document.querySelector('#room-code').value=room;render();}}
+
+document.querySelector('#board-focus').onclick=()=>{cancelMovement();boardFocus=!boardFocus;infoOpen=false;render();};
+document.querySelector('#info-tab').onclick=()=>{infoOpen=!infoOpen;render();};
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&boardFocus&&infoOpen){infoOpen=false;render();}});
