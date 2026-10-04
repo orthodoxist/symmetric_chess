@@ -6,7 +6,7 @@ const names={R:'룩',N:'나이트',B:'비숍',Q:'퀸',K:'킹',P:'폰'};
 const colorName=c=>c==='white'?'백':'흑';
 const difficultyName=()=>({easy:'쉬움',medium:'보통',hard:'어려움'}[aiLevel.value]);
 const notation=(r,c)=>String.fromCharCode(97+c)+(10-r);
-let game=Chess10.createGame(),selected=null;
+let game=Chess10.createGame(Number(document.querySelector('#time-control').value)),selected=null;
 const board=document.querySelector('#board'),dialog=document.querySelector('#promotion');
 const timeControl=document.querySelector('#time-control'),startButton=document.querySelector('#start');
 const gameMode=document.querySelector('#game-mode'),humanColor=document.querySelector('#human-color'),aiLevel=document.querySelector('#ai-level'),aiStatus=document.querySelector('#ai-status');
