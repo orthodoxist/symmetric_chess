@@ -136,7 +136,7 @@ function renderChat(){
   document.querySelector('#chat-tab').hidden=!onlineMode();
   document.querySelector('#overview-tab').setAttribute('aria-selected',String(panelPage==='overview'));
   document.querySelector('#chat-tab').setAttribute('aria-selected',String(panelPage==='chat'));
-  document.querySelector('#chat-tab').textContent='2 · 대국 채팅'+(chatUnread?' ('+chatUnread+')':'');
+  document.querySelector('#chat-tab').textContent='채팅'+(chatUnread?' ('+chatUnread+')':'');
   document.querySelector('#match-info').classList.toggle('has-chat',onlineMode());
   list.replaceChildren();
   for(const message of chatMessages){const li=document.createElement('li');li.textContent=colorName(message.color)+(message.color===onlineSession?.color?' (나)':'')+': '+message.text;list.append(li);}
