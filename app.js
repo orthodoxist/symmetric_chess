@@ -23,7 +23,7 @@ function animateLastMove(entry){
   piece.src=Chess10Pieces.url(entry.type,entry.color);
   moving=true;const run=++movementRun;
   to.classList.add('moving-square');
-  movement=piece.animate([{transform:'translate('+((a.left+a.width/2)-(b.left+b.width/2))+'px,'+((a.top+a.height/2)-(b.top+b.height/2))+'px)'},{transform:'translate(0,0)'}],{duration:500,easing:'cubic-bezier(.25,.7,.3,1)'});
+  movement=piece.animate([{transform:'translate('+((a.left+a.width/2)-(b.left+b.width/2))+'px,'+((a.top+a.height/2)-(b.top+b.height/2))+'px)'},{transform:'translate(0,0)'}],{duration:1000,easing:'cubic-bezier(.25,.7,.3,1)'});
   movement.finished.then(()=>{if(run!==movementRun)return;moving=false;movement=null;to.classList.remove('moving-square');render();}).catch(()=>{});
 }
 let onlineSession=null,onlineSending=false,onlineRun=0,onlineMessage='',onlineConnecting=false;
