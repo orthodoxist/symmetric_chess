@@ -186,7 +186,7 @@ function render(){
   document.querySelector('#match-screen').hidden=!game.clock.started;
   document.querySelector('#restart').hidden=!game.clock.started;
   const english=typeof Chess10I18n!=='undefined'&&Chess10I18n.language==='en';
-  document.querySelector('#match-summary').textContent=(onlineMode()?t('온라인 대결'):gameMode.value==='ai'?t('컴퓨터 대결')+' · '+difficultyName():t('혼자 연습'))+(english?' · '+timeControl.value+' min + 0 sec per player':' · 각 '+timeControl.value+'분 + 0초');
+  document.querySelector('#match-summary').textContent=(onlineMode()?t('온라인 대결'):gameMode.value==='ai'?t('컴퓨터 대결')+' · '+difficultyName():t('혼자 연습'))+(english?' · '+timeControl.value+' min':' · '+timeControl.value+'분');
   const available=!reviewing&&selected?Chess10.moves(game,...selected):[];
   const savedHighlights=[highlightGame,lastHighlights];
   const liveGame=game;let colors;
