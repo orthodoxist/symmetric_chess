@@ -227,8 +227,10 @@ function render(){
     board.append(button);
   }));
   if(shouldAnimate)animateLastMove(lastMove);
-  const victoryNames={checkmate:'체크메이트 승리',stalemate:'스테일메이트 승리',promotion:'프로모션 승리',timeout:'시간승',kingCapture:'킹 포획 승리',resign:'기권승'};
-  document.querySelector('#status').textContent=game.winner?colorName(game.winner)+' 승리! · '+(victoryNames[game.winReason]||'승리')+(gameMode.value==='ai'?' · 컴퓨터 난이도: '+difficultyName():''):game.draw?'무승부 · '+(game.draw==='repetition'?'3회 반복':'30수 규칙'):!game.clock.started?'시간을 선택하고 대국을 시작하세요':game.pending?colorName(game.turn)+' · 프로모션 선택':turnLabel(game);
+  const victoryNames={checkmate:'체크메이트',stalemate:'스테일메이트',promotion:'프로모션',timeout:'시간',kingCapture:'킹 포획',resign:'기권'};
+  const resultColor=gameMode.value==='local'?game.winner:onlineMode()?onlineSession?.color:humanColor.value;
+  const resultLabel=colorName(resultColor)+' '+(victoryNames[game.winReason]||'')+' '+(resultColor===game.winner?'승리':'패배');
+  document.querySelector('#status').textContent=game.winner?resultLabel+(gameMode.value==='ai'?' · 컴퓨터 난이도: '+difficultyName():''):game.draw?'무승부 · '+(game.draw==='repetition'?'3회 반복':'30수 규칙'):!game.clock.started?'시간을 선택하고 대국을 시작하세요':game.pending?colorName(game.turn)+' · 프로모션 선택':turnLabel(game);
   const positionNumber=reviewing?reviewIndex:game.history.length;
 
   if(reviewing)document.querySelector('#status').textContent=turnLabel(view);
