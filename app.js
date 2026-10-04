@@ -97,20 +97,42 @@ for(let i=0;i<10;i++){
   const rank=document.createElement('span');rank.textContent=10-i;document.querySelector('#ranks').append(rank);
   const file=document.createElement('span');file.textContent=String.fromCharCode(97+i);document.querySelector('#files').append(file);
 }
+let highlightGame=null,lastHighlights={winning:[],losing:[]};
+function boardHighlights(){
+  if(highlightGame!==game){highlightGame=game;lastHighlights={winning:[],losing:[]};}
+  const ended=Boolean(game.winner||game.draw);
+  const view=ended?{...game,winner:null,draw:null,pending:null}:game;
+  const winning=new Set(),losing=new Set();
+  const add=threat=>{winning.add(threat.from.join(','));losing.add(threat.to.join(','));};
+  const threats=Chess10.winningThreats(view);
+  for(const threat of [...threats.white,...threats.black])add(threat);
+  // Inspect each actual king destination, including captures and opened lines.
+  const kings=[];
+  view.board.forEach((row,r)=>row.forEach((p,c)=>{if(p?.color===view.turn&&p.type==='K')kings.push([r,c]);}));
+  if(kings.length===1&&!view.pending){
+    const [r,c]=kings[0],opponent=view.turn==='white'?'black':'white';
+    for(const [a,b] of Chess10.pseudoMoves(view,r,c)){
+      const next=Chess10.copyGame(view);
+      if(!Chess10.move(next,r,c,a,b,false))continue;
+      const attackers=Chess10.winningThreats(next)[opponent].filter(t=>t.reason==='lastKing');
+      if(attackers.length){losing.add([a,b].join(','));for(const threat of attackers)winning.add(threat.from.join(','));}
+    }
+  }
+  if(ended){
+    for(const key of lastHighlights.winning)winning.add(key);
+    for(const key of lastHighlights.losing)losing.add(key);
+    if(game.winReason==='promotion'){const move=game.history.at(-1);if(move){winning.add(move.from.join(','));losing.add(move.to.join(','));}}
+  }else lastHighlights={winning:[...winning],losing:[...losing]};
+  return {winning,losing};
+}
+
 function render(){
   document.querySelector('#setup-screen').hidden=game.clock.started;
   document.querySelector('#match-screen').hidden=!game.clock.started;
   document.querySelector('#restart').hidden=!game.clock.started;
   document.querySelector('#match-summary').textContent=(onlineMode()?'온라인 대결':gameMode.value==='ai'?'컴퓨터 대결 · '+difficultyName():'혼자 연습')+' · 각 '+timeControl.value+'분 + 0초';
   const available=selected?Chess10.moves(game,...selected):[];
-  const threats=Chess10.winningThreats(game);
-  const winningSquares=new Set(),losingSquares=new Set();
-  for(const threat of [...threats.white,...threats.black]){
-    winningSquares.add(threat.from.join(','));
-    losingSquares.add(threat.to.join(','));
-  }
-  const unsafe=Chess10.unsafeKingMoves(game);
-  for(const square of [...unsafe.white,...unsafe.black])losingSquares.add(square.join(','));
+  const {winning:winningSquares,losing:losingSquares}=boardHighlights();
   const lastMove=game.history.at(-1);
   const valueBubbles=new Map();
   if(typeof Chess10Material!=='undefined'){
