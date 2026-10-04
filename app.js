@@ -172,6 +172,8 @@ function turnLabel(state){
 }
 
 function render(){
+  const languageControls=document.querySelector('.language-controls');
+  if(languageControls)languageControls.hidden=game.clock.started;
   const view=reviewState(),reviewing=reviewIndex!==null;
   if(!game.clock.started){boardFocus=false;infoOpen=false;}
   document.querySelector('main').classList.toggle('board-focus',boardFocus);
