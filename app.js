@@ -29,7 +29,7 @@ function animateLastMove(entry){
 let onlineSession=null,onlineSending=false,onlineRun=0,onlineMessage='',onlineConnecting=false;
 const onlineMode=()=>gameMode.value==='online';
 const ownOnlineTurn=()=>onlineSession?.ready&&!onlineSession.busy&&game.turn===onlineSession.color;
-function closeOnline(){chatMessages=[];chatUnread=0;document.querySelector('#chat-input').value='';onlineRun++;onlineSession?.close();onlineSession=null;onlineConnecting=false;onlineMessage='';document.querySelector('#invite-link').value='';}
+function closeOnline(){panelPage='overview';chatMessages=[];chatUnread=0;document.querySelector('#chat-input').value='';onlineRun++;onlineSession?.close();onlineSession=null;onlineConnecting=false;onlineMessage='';document.querySelector('#invite-link').value='';}
 function sendOnline(action){
   if(!ownOnlineTurn())return false;
   onlineSending=true;try{return onlineSession.action(action);}finally{onlineSending=false;}
@@ -46,7 +46,7 @@ async function openOnline(host){
     let token=crypto.randomUUID();
     if(!host){try{const key='chess-room-'+room;token=sessionStorage.getItem(key)||token;sessionStorage.setItem(key,token);}catch{}}
     onlineSession=new Chess10Online.Session({Peer,host,color:humanColor.value,minutes:Number(timeControl.value),token,
-      onChat:messages=>{if(run!==onlineRun)return;const previous=chatMessages.length;chatMessages=messages;if(boardFocus&&!infoOpen&&messages.length>previous&&messages.at(-1)?.color!==onlineSession?.color)chatUnread++;renderChat();},
+      onChat:messages=>{if(run!==onlineRun)return;const previous=chatMessages.length;chatMessages=messages;if((panelPage!=='chat'||boardFocus&&!infoOpen)&&messages.length>previous&&messages.at(-1)?.color!==onlineSession?.color)chatUnread++;renderChat();},
       onRoom:id=>{if(run!==onlineRun)return;const url=new URL(location.href);url.search='';url.hash='';url.searchParams.set('room',id);document.querySelector('#invite-link').value=url.href;onlineMessage='초대 링크를 상대에게 보내주세요. 입장하면 대국이 시작됩니다.';render();},
       onStatus:message=>{if(run!==onlineRun)return;onlineMessage=message;document.querySelector('#online-status').textContent=message;if(!moving)render();},
       onState:(state,changed)=>{if(run!==onlineRun)return;game=state;timeControl.value=String(onlineSession.minutes);humanColor.value=onlineSession.color;if(changed){selected=null;if(!game.pending&&dialog.open)dialog.close();if(!onlineSending){cancelMovement();render();}}else renderClocks();}
@@ -127,10 +127,16 @@ function boardHighlights(){
   return {winning,losing};
 }
 
-let chatMessages=[],chatUnread=0;
+let chatMessages=[],chatUnread=0,panelPage='overview';
 function renderChat(){
   const section=document.querySelector('#match-chat'),list=document.querySelector('#chat-messages');
-  section.hidden=!onlineMode();
+  if(!onlineMode())panelPage='overview';
+  section.hidden=panelPage!=='chat';
+  document.querySelector('#match-overview').hidden=panelPage!=='overview';
+  document.querySelector('#chat-tab').hidden=!onlineMode();
+  document.querySelector('#overview-tab').setAttribute('aria-selected',String(panelPage==='overview'));
+  document.querySelector('#chat-tab').setAttribute('aria-selected',String(panelPage==='chat'));
+  document.querySelector('#chat-tab').textContent='2 · 대국 채팅'+(chatUnread?' ('+chatUnread+')':'');
   document.querySelector('#match-info').classList.toggle('has-chat',onlineMode());
   list.replaceChildren();
   for(const message of chatMessages){const li=document.createElement('li');li.textContent=colorName(message.color)+(message.color===onlineSession?.color?' (나)':'')+': '+message.text;list.append(li);}
@@ -248,8 +254,11 @@ document.querySelector('#copy-invite').onclick=async()=>{const link=document.que
 if(typeof location!=='undefined'){const room=new URL(location.href).searchParams.get('room');if(room){gameMode.value='online';document.querySelector('#room-code').value=room;render();}}
 
 document.querySelector('#board-focus').onclick=()=>{cancelMovement();boardFocus=!boardFocus;infoOpen=false;render();};
-document.querySelector('#info-tab').onclick=()=>{infoOpen=!infoOpen;if(infoOpen)chatUnread=0;render();};
+document.querySelector('#info-tab').onclick=()=>{infoOpen=!infoOpen;if(infoOpen&&panelPage==='chat')chatUnread=0;render();};
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&boardFocus&&infoOpen){infoOpen=false;render();}});
 
 document.querySelector('#chat-form').onsubmit=event=>{event.preventDefault();const input=document.querySelector('#chat-input');if(onlineSession?.sendChat(input.value)){input.value='';renderChat();}else document.querySelector('#chat-status').textContent='전송하지 못했습니다. 연결을 확인하고 잠시 후 다시 보내주세요.';};
 document.querySelector('#rules-toggle').onclick=()=>{const rules=document.querySelector('#game-rules');rules.hidden=!rules.hidden;document.querySelector('#rules-toggle').setAttribute('aria-expanded',String(!rules.hidden));};
+
+document.querySelector('#overview-tab').onclick=()=>{panelPage='overview';renderChat();};
+document.querySelector('#chat-tab').onclick=()=>{panelPage='chat';chatUnread=0;renderChat();};
