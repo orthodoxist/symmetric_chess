@@ -5,7 +5,7 @@
     '내 진영':'Your side','백 · 선공':'White · moves first','흑 · 후공':'Black · moves second','컴퓨터 난이도':'Computer difficulty',
     '쉬움 · 최대 3초':'Easy · up to 3 seconds','보통 · 최대 6초':'Normal · up to 6 seconds','어려움 · 최대 10초':'Hard · up to 10 seconds',
     '쉬움':'Easy','보통':'Normal','어려움':'Hard','플레이어별 제한시간':'Time per player',
-    '5분 + 0초':'5 min + 0 sec','15분 + 0초':'15 min + 0 sec','30분 + 0초':'30 min + 0 sec','45분 + 0초':'45 min + 0 sec','60분 + 0초':'60 min + 0 sec',
+    '5분':'5 min','15분':'15 min','30분':'30 min','45분':'45 min','60분':'60 min',
     '추가 시간은 없습니다. 0초가 되면 시간패합니다.':'No increment. You lose when your time runs out.',
     '방장은 진영과 제한시간을 선택하고 방을 만드세요. 상대는 초대 링크로 입장합니다.':'Choose your side and time limit, then create a room. Your opponent joins using the invite link.',
     '방 만들기':'Create room','초대 링크':'Invite link','방을 만들면 표시됩니다':'Appears after you create a room','초대 링크 복사':'Copy invite link','상대가 보낸 링크 입력':'Paste your opponent’s invite link','방 입장':'Join room','대국 시작':'Start game','게임 규칙':'Game rules',
