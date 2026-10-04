@@ -233,7 +233,7 @@ function render(){
   if(!moving&&!aiThinking&&!aiError&&computerTurn()&&game.clock.started&&!game.winner&&!game.draw&&!game.pending)setTimeout(playComputer,120);
 }
 dialog.addEventListener('cancel',e=>e.preventDefault());
-document.querySelector('#restart').onclick=()=>{if(game.clock.started&&!game.winner&&!game.draw&&!confirm('현재 게임을 끝내고 새 게임을 시작할까요?'))return;cancelAI();cancelMovement();closeOnline();game=Chess10.createGame(Number(timeControl.value));selected=null;dialog.close();render();};
+document.querySelector('#restart').onclick=()=>{if(game.clock.started&&!game.winner&&!game.draw&&!confirm('현재 게임을 끝내고 홈 화면으로 이동할까요?'))return;cancelAI();cancelMovement();closeOnline();game=Chess10.createGame(Number(timeControl.value));selected=null;dialog.close();render();};
 timeControl.onchange=()=>{if(game.clock.started)return;game=Chess10.createGame(Number(timeControl.value));selected=null;render();};
 startButton.onclick=()=>{if(game.clock.started||onlineMode())return;Chess10.startClock(game);render();};
 gameMode.onchange=()=>{if(!game.clock.started){cancelAI();closeOnline();game=Chess10.createGame(Number(timeControl.value));selected=null;render();}};
@@ -268,3 +268,16 @@ if(typeof ResizeObserver!=='undefined'){
   const sizePanel=()=>{const height=board.getBoundingClientRect().height;if(height>0)document.querySelector('#match-info').style.setProperty('--board-height',height+'px');};
   new ResizeObserver(sizePanel).observe(board);
 }
+
+let navigationApproved=false;
+const activeMatch=()=>game.clock.started&&!game.winner&&!game.draw;
+document.addEventListener('keydown',event=>{
+  const reloadKey=event.key==='F5'||(event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='r';
+  if(!reloadKey||!activeMatch()||event.defaultPrevented)return;
+  event.preventDefault();
+  if(confirm('현재 게임을 끝내고 홈 화면으로 이동할까요?')){navigationApproved=true;location.reload();}
+});
+window.addEventListener?.('beforeunload',event=>{
+  if(!activeMatch()||navigationApproved)return;
+  event.preventDefault();event.returnValue='';
+});
