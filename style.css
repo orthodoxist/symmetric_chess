@@ -71,7 +71,11 @@ main:has(#setup-screen:not([hidden])) header{justify-content:center;text-align:c
 #info-tab{touch-action:none;user-select:none;cursor:grab}#info-tab:active{cursor:grabbing}
 @media(max-width:850px){
   .board-focus .board-panel{width:min(calc(100dvh - 160px),100%);margin-inline:auto}
-  .board-focus #info-tab{position:relative;display:block;top:auto;right:auto;transform:none;writing-mode:horizontal-tb;margin:12px 0 0 auto;padding:10px 16px}
+  .board-focus #info-tab{position:relative;display:flex;top:auto;right:auto;transform:none;writing-mode:horizontal-tb;margin:12px 0 0 auto;padding:10px 16px}
   .board-focus.info-open #info-tab{position:fixed;right:12px;bottom:12px;margin:0}
   .board-focus #match-info.match-panel.card{left:12px;right:12px;width:auto;bottom:68px}
 }
+/* Match the label and button writing modes to avoid mixed-mode baselines. */
+#info-tab{display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.25;-webkit-appearance:none;appearance:none}
+#info-tab-label{display:block;writing-mode:inherit;line-height:1.25;margin:0;padding:0}
+html[lang="en"] #info-tab{writing-mode:horizontal-tb}
