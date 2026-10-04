@@ -7,8 +7,8 @@
   function unpack(data){return {...data,repetitions:new Map(data.repetitions),clock:{...data.clock,remaining:{...data.clock.remaining},last:Date.now()}};}
   const validSquare=p=>Array.isArray(p)&&p.length===2&&p.every(n=>Number.isInteger(n)&&n>=0&&n<10);
   class Session{
-    constructor({Peer,host=false,color='white',minutes=15,token,onState=()=>{},onStatus=()=>{},onRoom=()=>{},now=Date.now}){
-      Object.assign(this,{host,color,minutes,token,onState,onStatus,onRoom,now});
+    constructor({Peer,host=false,color='white',minutes=15,token,onState=()=>{},onStatus=()=>{},onRoom=()=>{},onChat=()=>{},now=Date.now}){
+      Object.assign(this,{host,color,minutes,token,onState,onStatus,onRoom,onChat,now});
       this.game=rules.createGame(minutes);this.revision=0;this.ready=false;this.closed=false;this.busy=false;
       this.peer=new Peer({debug:0});
       this.peer.on('open',id=>{if(host)this.onRoom(id);else if(this.room)this.connect();});
@@ -46,15 +46,17 @@
       conn.on('error',error=>{console.error('Chess data connection error',error);this.onStatus(error.type==='message-too-big'?'대국 데이터 전송 크기 오류입니다. 두 플레이어 모두 최신 화면으로 다시 접속해주세요.':'대국 연결에 문제가 있습니다. 네트워크를 확인해주세요.');});
     }
     broadcast(){
-      if(this.conn?.open)this.conn.send({kind:'state',protocol:PROTOCOL,revision:this.revision,color:this.color==='white'?'black':'white',minutes:this.minutes,game:pack(this.game)});
+      if(this.conn?.open)this.conn.send({kind:'state',protocol:PROTOCOL,revision:this.revision,color:this.color==='white'?'black':'white',minutes:this.minutes,game:pack(this.game),chat:this.chatLog()});
     }
     receive(message){
       if(!message||typeof message!=='object')return;
       if(this.host){
+        if(message.kind==='chat'&&message.protocol===PROTOCOL){this.receiveChat(message.text,this.color==='white'?'black':'white');return;}
         if(message.kind==='action')this.apply(message.action,this.color==='white'?'black':'white',message.revision);
         else if(message.kind==='sync')this.broadcast();
         return;
       }
+      if(message.kind==='chat-log'&&message.protocol===PROTOCOL){this.acceptChatLog(message.messages);return;}
       if(message.kind==='clock'&&message.protocol===PROTOCOL){
         if(message.revision!==this.revision){if(this.conn?.open)this.conn.send({kind:'sync'});return;}
         if(message.remaining&&Number.isFinite(message.remaining.white)&&Number.isFinite(message.remaining.black)){
@@ -64,6 +66,7 @@
       if(message.kind==='reject'){this.onStatus(message.message);this.close();return;}
       if(message.kind!=='state'||message.protocol!==PROTOCOL||!Number.isInteger(message.revision)||message.revision<this.revision)return;
       if(!message.game||!Array.isArray(message.game.board)||message.game.board.length!==10||!Array.isArray(message.game.repetitions))return;
+      if(message.chat)this.acceptChatLog(message.chat);
       const changed=!this.game.clock.started||message.revision!==this.revision||message.game.winner!==this.game.winner||message.game.draw!==this.game.draw;
       const oldHistory=this.game.history;
       const state=unpack(message.game);
@@ -72,6 +75,28 @@
       Object.assign(this.game,state);this.color=message.color;this.minutes=message.minutes;this.revision=message.revision;this.busy=false;this.ready=true;
       this.onState(this.game,changed);
     }
+    chatLog(){return this.messages||[];}
+    receiveChat(text,color){
+      if(typeof text!=='string'||text.length>200||!text.trim())return false;
+      const now=this.now();this.chatTimes=this.chatTimes||{};
+      if(this.chatTimes[color]!==undefined&&now-this.chatTimes[color]<500)return false;
+      this.chatTimes[color]=now;
+      this.messages=[...this.chatLog(),{color,text:text.trim()}].slice(-100);
+      this.onChat(this.messages);
+      if(this.conn?.open)this.conn.send({kind:'chat-log',protocol:PROTOCOL,messages:this.messages});
+      return true;
+    }
+    sendChat(text){
+      if(this.closed||!this.ready||!this.conn?.open||typeof text!=='string'||text.length>200||!text.trim())return false;
+      if(this.host)return this.receiveChat(text,this.color);
+      const now=this.now();if(this.lastChatSent!==undefined&&now-this.lastChatSent<500)return false;
+      this.lastChatSent=now;this.conn.send({kind:'chat',protocol:PROTOCOL,text:text.trim()});return true;
+    }
+    acceptChatLog(messages){
+      if(!Array.isArray(messages)||messages.length>100||!messages.every(m=>m&&['white','black'].includes(m.color)&&typeof m.text==='string'&&m.text.length<=200))return;
+      this.messages=messages;this.onChat(messages);
+    }
+
     action(action){
       if(!this.ready||this.busy||this.game.turn!==this.color||this.game.winner||this.game.draw)return false;
       if(this.host)return this.apply(action,this.color,this.revision);
