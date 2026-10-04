@@ -10,21 +10,21 @@ g=empty();g.board[8][4]={type:'R',color:'black'};assert.ok(move(g,9,4,8,4));asse
 g=empty();g.board[5][5]={type:'R',color:'white'};g.board[4][5]={type:'P',color:'white'};assert.ok(!moves(g,5,5).some(([r,c])=>r===3&&c===5));
 console.log('Passed: setup, pawn movement, promotion choices, instant victory, two-king capture, king revival, unrestricted king capture, blocked sliding moves.');
 g=createGame();
-for(let cycle=0;cycle<2;cycle++) {
+for(let cycle=0;cycle<4;cycle++) {
   assert.ok(move(g,9,1,7,2));assert.ok(move(g,0,1,2,2));
   assert.ok(move(g,7,2,9,1));assert.ok(move(g,2,2,0,1));
-  assert.equal(g.draw,cycle===0?null:'repetition');
+  assert.equal(g.draw,cycle<3?null:'repetition');
 }
 assert.equal(move(g,8,0,7,0),false);
-g=empty();g.quietPlies=58;assert.ok(move(g,9,4,9,3));assert.equal(g.draw,null);
-assert.ok(move(g,0,4,1,4));assert.equal(g.draw,'thirtyMoves');
-g=empty();g.quietPlies=59;g.board[8][0]={type:'P',color:'white'};move(g,8,0,7,0);assert.equal(g.quietPlies,0);assert.equal(g.draw,null);
-g=empty();g.quietPlies=59;g.board[8][4]={type:'R',color:'black'};move(g,9,4,8,4);assert.equal(g.quietPlies,0);assert.equal(g.draw,null);
+g=empty();g.quietPlies=98;assert.ok(move(g,9,4,9,3));assert.equal(g.draw,null);
+assert.ok(move(g,0,4,1,4));assert.equal(g.draw,'fiftyMoves');
+g=empty();g.quietPlies=99;g.board[8][0]={type:'P',color:'white'};move(g,8,0,7,0);assert.equal(g.quietPlies,0);assert.equal(g.draw,null);
+g=empty();g.quietPlies=99;g.board[8][4]={type:'R',color:'black'};move(g,9,4,8,4);assert.equal(g.quietPlies,0);assert.equal(g.draw,null);
 const {positionKey}=require('./engine.js');
 g=empty();const key=positionKey(g);g.captured.white.push({type:'Q',color:'white'});assert.notEqual(positionKey(g),key);
 g=empty();g.board=Array.from({length:10},()=>Array(10).fill(null));g.board[0][0]={type:'P',color:'white'};assert.deepEqual(moves(g,0,0),[]);assert.equal(g.draw,null);
-g=empty();g.board[0][5]=null;g.board[1][4]={type:'R',color:'white'};g.quietPlies=59;move(g,1,4,0,4);assert.equal(g.winner,'white');assert.equal(g.draw,null);
-console.log('Passed: threefold repetition, draw move lock, 60-ply boundary, pawn/capture resets, promotion inventory identity, no stalemate draw, victory precedence.');
+g=empty();g.board[0][5]=null;g.board[1][4]={type:'R',color:'white'};g.quietPlies=99;move(g,1,4,0,4);assert.equal(g.winner,'white');assert.equal(g.draw,null);
+console.log('Passed: fivefold repetition, draw move lock, 100-ply boundary, pawn/capture resets, promotion inventory identity, no stalemate draw, victory precedence.');
 const {startClock,tickClock}=require('./engine.js');
 for(const minutes of [15,30,45]){
   g=createGame(minutes);assert.equal(g.clock.remaining.white,minutes*60000);assert.equal(g.clock.remaining.black,minutes*60000);
@@ -124,7 +124,7 @@ g=loneKingGame();g.board[4][5]={type:'R',color:'black'};assert.ok(!unsafeKingMov
 g=loneKingGame();g.board[2][5]={type:'N',color:'black'};assert.ok(unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===6));
 g=loneKingGame();g.board[3][4]={type:'P',color:'black',moved:true};assert.ok(unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===5));assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===4));
 g=loneKingGame();g.board[0][0]=null;g.board[4][5]={type:'K',color:'black'};g.board[4][0]={type:'R',color:'black'};assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===5)); // Capturing last enemy king ends game immediately.
-g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.quietPlies=59;assert.deepEqual(unsafeKingMoves(g).white,[]); // Draw ends game before a reply.
+g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.quietPlies=99;assert.deepEqual(unsafeKingMoves(g).white,[]); // Draw ends game before a reply.
 g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.turn='black';assert.deepEqual(unsafeKingMoves(g).white,[]);
 g.board[0][0]=null;g.board[5][5]=null;g.board[5][5]={type:'K',color:'black'};g.board[5][0]={type:'R',color:'white'};g.board[9][9]={type:'K',color:'white'};assert.ok(unsafeKingMoves(g).black.length>0);
 g.winner='black';assert.deepEqual(unsafeKingMoves(g),{white:[],black:[]});

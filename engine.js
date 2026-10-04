@@ -89,8 +89,8 @@
     else if(adjudicate&&isStalemate(game)){
       game.winner=game.turn==='white'?'black':'white';game.winReason='stalemate';
     }
-    else if(count>=3) game.draw='repetition';
-    else if(game.quietPlies>=60) game.draw='thirtyMoves';
+    else if(count>=5) game.draw='repetition';
+    else if(game.quietPlies>=100) game.draw='fiftyMoves';
   }
   function move(game,r,c,a,b,adjudicate=true) {
     if(!(adjudicate?moves:pseudoMoves)(game,r,c).some(([x,y])=>x===a&&y===b)) return false;
