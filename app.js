@@ -38,7 +38,7 @@ function promotePiece(type){return onlineMode()?sendOnline({kind:'promote',type}
 async function openOnline(host){
   if(game.clock.started||onlineConnecting)return;
   const input=document.querySelector('#room-code').value.trim();let room=input;
-  if(!host){try{if(input.includes('://'))room=new URL(input).searchParams.get('room')||'';}catch{}if(!/^[a-zA-Z0-9_-]{8,100}$/.test(room)){onlineMessage='초대 링크 또는 방 코드를 입력해주세요.';render();return;}}
+  if(!host){try{if(input.includes('://'))room=new URL(input).searchParams.get('room')||'';}catch{}if(!/^[a-zA-Z0-9_-]{8,100}$/.test(room)){onlineMessage='초대 링크를 입력해주세요.';render();return;}}
   closeOnline();cancelAI();cancelMovement();const run=onlineRun;
   onlineConnecting=true;onlineMessage='연결 서비스를 준비 중입니다…';render();
   try{
@@ -249,7 +249,6 @@ render();
 
 document.querySelector('#create-room').onclick=()=>openOnline(true);
 document.querySelector('#join-room').onclick=()=>openOnline(false);
-document.querySelector('#leave-room').onclick=()=>{if(game.clock.started)return;closeOnline();game=Chess10.createGame(Number(timeControl.value));selected=null;render();};
 document.querySelector('#copy-invite').onclick=async()=>{const link=document.querySelector('#invite-link');if(!link.value)return;try{await navigator.clipboard.writeText(link.value);document.querySelector('#online-status').textContent='초대 링크를 복사했습니다.';}catch{link.select();document.querySelector('#online-status').textContent='선택된 링크를 복사해주세요.';}};
 if(typeof location!=='undefined'){const room=new URL(location.href).searchParams.get('room');if(room){gameMode.value='online';document.querySelector('#room-code').value=room;render();}}
 
