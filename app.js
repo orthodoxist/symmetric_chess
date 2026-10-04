@@ -155,7 +155,7 @@ function render(){
   document.querySelector('main').classList.toggle('board-focus',boardFocus);
   document.querySelector('main').classList.toggle('info-open',boardFocus&&infoOpen);
   const focusButton=document.querySelector('#board-focus'),infoTab=document.querySelector('#info-tab');
-  focusButton.hidden=!game.clock.started;focusButton.textContent=boardFocus?'기본 화면으로':'크게 보기';focusButton.setAttribute('aria-pressed',String(boardFocus));
+  focusButton.hidden=!game.clock.started;focusButton.textContent=boardFocus?'작게 보기':'크게 보기';focusButton.setAttribute('aria-pressed',String(boardFocus));
   infoTab.hidden=!boardFocus;document.querySelector('#info-tab-label').textContent=infoOpen?'정보 닫기':'대국 정보';infoTab.setAttribute('aria-expanded',String(infoOpen));
   document.querySelector('#match-info').hidden=boardFocus&&!infoOpen;
   document.querySelector('#setup-screen').hidden=game.clock.started;
