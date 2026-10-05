@@ -1,7 +1,7 @@
 (function(root){
   const en={
     '대칭 체스':'Symmetric Chess','두 킹을 모두 잡아 완성하는 승리':'Capture both kings to win',
-    '대국 설정':'Game setup','대국 방식':'Game mode','혼자 연습':'Practice','컴퓨터와 대결':'Play the computer','사람과 대결':'Play a person','온라인 대결':'Online game','컴퓨터 대결':'Computer game',
+    '대국 설정':'Game setup','대국 방식':'Game mode','혼자 연습':'Practice','컴퓨터와 대결':'Play the computer','사람과 대결':'Play a human','온라인 대결':'Human','컴퓨터 대결':'Computer',
     '내 진영':'Your side','백 · 선공':'White · moves first','흑 · 후공':'Black · moves second','컴퓨터 난이도':'Computer difficulty',
     '쉬움 · 최대 3초':'Easy · up to 3 seconds','보통 · 최대 6초':'Normal · up to 6 seconds','어려움 · 최대 10초':'Hard · up to 10 seconds',
     '쉬움':'Easy','보통':'Normal','어려움':'Hard','플레이어별 제한시간':'Time per player',
