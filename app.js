@@ -357,7 +357,7 @@ document.addEventListener('keydown',event=>{
 });
 for(const code of ['en','ko'])document.querySelector('#language-'+code).onclick=()=>{if(typeof Chess10I18n!=='undefined'){Chess10I18n.set(code);render();}};
 
-let resultBlob=null,resultImageURL=null;
+let resultBlob=null,resultImageURL=null,resultText='';
 const resultFileName=()=> 'symmetric-chess-result.png';
 function resultSnapshot(){
   const value=id=>document.querySelector(id).textContent;
@@ -367,6 +367,8 @@ function resultSnapshot(){
     squares:Array.from(board.children,square=>({background:getComputedStyle(square).backgroundColor,src:square.querySelector('img.piece')?.src||null})),
     captured:['white','black'].map(color=>game.captured[color].map(piece=>({src:Chess10Pieces.url(piece.type,piece.color)}))),
     history:Array.from(document.querySelector('#history').children,item=>item.textContent),
+    settings:t('대국 설정')+': '+value('#match-summary')+(gameMode.value==='local'?'':'\n'+t('내 진영')+': '+colorName(onlineMode()?onlineSession.color:humanColor.value)),
+    capturedNames:['white','black'].map(color=>game.captured[color].map(piece=>names[piece.type]).join(', ')||'—'),
     labels:{overview:t('대국 현황'),remaining:t('남은 시간'),elapsed:t('총 대국시간'),score:t('기물 점수'),captured:t('포획된 기물'),history:t('이동 기록'),sides:[t('백'),t('흑')]}
   };
 }
@@ -376,6 +378,7 @@ document.querySelector('#share-result').onclick=async()=>{
   try{
     cancelMovement();reviewIndex=null;selected=null;render();
     const snapshot=resultSnapshot();
+    resultText=[snapshot.title,snapshot.status,snapshot.kings,'',snapshot.settings,'',snapshot.labels.remaining,...snapshot.labels.sides.map((side,i)=>side+': '+snapshot.times[i]),snapshot.labels.elapsed+': '+snapshot.elapsed,'',snapshot.labels.score,...snapshot.labels.sides.map((side,i)=>side+': '+snapshot.scores[i]),'',snapshot.labels.captured,...snapshot.labels.sides.map((side,i)=>side+': '+snapshot.capturedNames[i]),'',snapshot.labels.history,...snapshot.history.map((entry,i)=>(i+1)+'. '+entry),'','https://orxodoxist.github.io/symmetric_chess/'].join('\r\n');
     // Restore the viewer immediately; capture always represents the final live position.
     reviewIndex=savedReview;selected=savedSelection;render();
     resultBlob=await Chess10Share.capture(snapshot);
@@ -387,6 +390,7 @@ document.querySelector('#share-result').onclick=async()=>{
 };
 document.querySelector('#close-share').onclick=()=>document.querySelector('#share-preview').close();
 document.querySelector('#save-image').onclick=()=>{if(resultBlob)Chess10Share.save(resultBlob,resultFileName());};
+document.querySelector('#save-text').onclick=()=>{if(resultText)Chess10Share.save(new Blob(['\uFEFF',resultText],{type:'text/plain;charset=utf-8'}),'symmetric-chess-result.txt');};
 document.querySelector('#share-image').onclick=async()=>{
   if(!resultBlob)return;
   const status=document.querySelector('#share-status');
