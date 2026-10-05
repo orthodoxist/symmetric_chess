@@ -9,6 +9,7 @@ const colorName=c=>c==='white'?t('백'):t('흑');
 const difficultyName=()=>({easy:t('쉬움'),medium:t('보통'),hard:t('어려움')}[aiLevel.value]);
 const notation=(r,c)=>String.fromCharCode(97+c)+(10-r);
 let game=Chess10.createGame(Number(document.querySelector('#time-control').value)),selected=null;
+let sharingResult=false;
 const board=document.querySelector('#board'),dialog=document.querySelector('#promotion');
 const timeControl=document.querySelector('#time-control'),startButton=document.querySelector('#start');
 const gameMode=document.querySelector('#game-mode'),humanColor=document.querySelector('#human-color'),aiLevel=document.querySelector('#ai-level'),aiStatus=document.querySelector('#ai-status');
@@ -172,6 +173,8 @@ function turnLabel(state){
 }
 
 function render(){
+  const shareButton=document.querySelector('#share-result');
+  if(shareButton){shareButton.hidden=!game.clock.started;shareButton.disabled=sharingResult||!game.winner&&!game.draw;shareButton.textContent=t(sharingResult?'이미지 생성 중…':'결과 공유');}
   const languageControls=document.querySelector('.language-controls');
   if(languageControls)languageControls.hidden=game.clock.started;
   const view=reviewState(),reviewing=reviewIndex!==null;
@@ -353,3 +356,44 @@ document.addEventListener('keydown',event=>{
   render();
 });
 for(const code of ['en','ko'])document.querySelector('#language-'+code).onclick=()=>{if(typeof Chess10I18n!=='undefined'){Chess10I18n.set(code);render();}};
+
+let resultBlob=null,resultImageURL=null;
+const resultFileName=()=> 'symmetric-chess-result.png';
+function resultSnapshot(){
+  const value=id=>document.querySelector(id).textContent;
+  return {
+    title:t('대칭 체스'),status:value('#status'),kings:value('#king-count'),summary:value('#match-summary'),
+    times:[value('#time-white'),value('#time-black')],elapsed:value('#total-time'),scores:[value('#score-white'),value('#score-black')],
+    squares:Array.from(board.children,square=>({background:getComputedStyle(square).backgroundColor,src:square.querySelector('img.piece')?.src||null})),
+    captured:['white','black'].map(color=>game.captured[color].map(piece=>({src:Chess10Pieces.url(piece.type,piece.color)}))),
+    history:Array.from(document.querySelector('#history').children,item=>item.textContent),
+    labels:{overview:t('대국 현황'),remaining:t('남은 시간'),elapsed:t('총 대국시간'),score:t('기물 점수'),captured:t('포획된 기물'),history:t('이동 기록'),sides:[t('백'),t('흑')]}
+  };
+}
+document.querySelector('#share-result').onclick=async()=>{
+  if(!game.winner&&!game.draw||sharingResult)return;
+  sharingResult=true;const savedReview=reviewIndex,savedSelection=selected;
+  try{
+    cancelMovement();reviewIndex=null;selected=null;render();
+    const snapshot=resultSnapshot();
+    // Restore the viewer immediately; capture always represents the final live position.
+    reviewIndex=savedReview;selected=savedSelection;render();
+    resultBlob=await Chess10Share.capture(snapshot);
+    if(resultImageURL)URL.revokeObjectURL(resultImageURL);
+    resultImageURL=URL.createObjectURL(resultBlob);document.querySelector('#result-image').src=resultImageURL;
+    document.querySelector('#share-status').textContent='';document.querySelector('#share-preview').showModal();
+  }catch(error){console.error(error);alert(t('이미지를 생성하지 못했습니다. 다시 시도해주세요.'));}
+  finally{reviewIndex=savedReview;selected=savedSelection;sharingResult=false;render();}
+};
+document.querySelector('#close-share').onclick=()=>document.querySelector('#share-preview').close();
+document.querySelector('#save-image').onclick=()=>{if(resultBlob)Chess10Share.save(resultBlob,resultFileName());};
+document.querySelector('#share-image').onclick=async()=>{
+  if(!resultBlob)return;
+  const status=document.querySelector('#share-status');
+  const file=new File([resultBlob],resultFileName(),{type:'image/png'});
+  if(!navigator.share||!navigator.canShare?.({files:[file]})){
+    Chess10Share.save(resultBlob,resultFileName());status.textContent=t('공유를 지원하지 않아 이미지를 저장했습니다. SNS에 첨부해주세요.');return;
+  }
+  try{await navigator.share({files:[file],title:t('대칭 체스')});status.textContent='';}
+  catch(error){if(error.name!=='AbortError')status.textContent=t('공유하지 못했습니다. 이미지 저장 버튼으로 저장해주세요.');}
+};
