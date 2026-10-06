@@ -86,3 +86,9 @@ main:has(#setup-screen:not([hidden])) header{justify-content:center;text-align:c
 #share-preview{width:min(1100px,94vw);max-width:94vw;max-height:90dvh;overflow:auto}#result-image{display:block;width:100%;height:auto;margin-bottom:16px}.share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 
 #board-flip{display:inline-flex;align-items:center;justify-content:center;padding:8px 10px;min-width:40px;min-height:40px}#board-flip[hidden]{display:none}#board-flip[aria-pressed="true"]{background:#426b5e;border-color:#81b8aa}
+
+/* Match the three board controls to the expand button. */
+.view-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+#share-result,#board-flip,#board-focus{width:91.03125px;height:40px;padding:10px 16px;font-size:13.3333px;line-height:normal;white-space:nowrap}
+html[lang="en"] #share-result,html[lang="en"] #board-flip,html[lang="en"] #board-focus{width:120px}
+@media(max-width:520px){#share-result,#board-flip,#board-focus{width:72px;height:35px;padding:8px 10px;font-size:12px}html[lang="en"] #share-result,html[lang="en"] #board-flip,html[lang="en"] #board-focus{width:104px}}
