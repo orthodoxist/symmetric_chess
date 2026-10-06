@@ -53,6 +53,19 @@ function setup(){
   assert.equal(h.element('#board').children.length,100);
   assert.equal(h.element('#board').children[35].children.find(c=>c.className?.startsWith('move-comment')).textContent,'!');
   assert.equal(h.element('#board').children.flatMap(e=>e.children).filter(e=>e.className?.startsWith('move-comment')).length,1);
+  // Flipping changes display order while clicks retain their original coordinates.
+  h=setup();h.element('#game-mode').value='local';h.element('#start').onclick();
+  const first=h.element('#board').children[0],last=h.element('#board').children[99];
+  h.element('#board-flip').onclick();
+  assert.equal(h.element('#ranks').children[0].textContent,1);
+  assert.equal(h.element('#files').children[0].textContent,'j');
+  assert.equal(h.element('#board').children[0].children[0].src,last.children[0].src);
+  h.element('#board').children[19].onclick();h.element('#board').children[29].onclick();
+  assert.equal(h.run('game.board[7][0].type'),'P');assert.equal(h.run('game.history.length'),1);
+  h.element('#board-flip').onclick();
+  assert.equal(h.element('#ranks').children[0].textContent,10);
+  assert.equal(h.element('#files').children[0].textContent,'a');
+  assert.equal(h.element('#board').children[0].children[0].src,first.children[0].src);
   // Real animation lifecycle: input waits, restart cancels, stale completion is ignored.
   const animations=[];
   Element.prototype.getBoundingClientRect=function(){return {left:0,top:0,width:50,height:50};};
@@ -61,7 +74,7 @@ function setup(){
   h=setup();h.element('#game-mode').value='local';h.element('#start').onclick();
   for(const square of h.element('#board').children){square.classList.add=()=>{};square.classList.remove=()=>{};}
   // Every subsequent render creates new squares, so provide class methods globally.
-  h.click(8,0);h.click(7,0);assert.equal(h.run('moving'),true);assert.equal(animations.at(-1).options.duration,360);
+  h.click(8,0);h.click(7,0);assert.equal(h.run('moving'),true);assert.equal(animations.at(-1).options.duration,500);
   h.click(1,0);h.click(2,0);assert.equal(h.run('game.history.length'),1);
   animations.at(-1).finish();await h.flush();assert.equal(h.run('moving'),false);
   h.click(1,0);h.click(2,0);assert.equal(h.run('game.history.length'),2);

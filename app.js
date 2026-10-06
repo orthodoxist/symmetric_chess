@@ -9,7 +9,8 @@ const colorName=c=>c==='white'?t('백'):t('흑');
 const difficultyName=()=>({easy:t('쉬움'),medium:t('보통'),hard:t('어려움')}[aiLevel.value]);
 const notation=(r,c)=>String.fromCharCode(97+c)+(10-r);
 let game=Chess10.createGame(Number(document.querySelector('#time-control').value)),selected=null;
-let sharingResult=false;
+let sharingResult=false,boardFlipped=false;
+const squareIndex=(r,c)=>boardFlipped?99-(r*10+c):r*10+c;
 const board=document.querySelector('#board'),dialog=document.querySelector('#promotion');
 const timeControl=document.querySelector('#time-control'),startButton=document.querySelector('#start');
 const gameMode=document.querySelector('#game-mode'),humanColor=document.querySelector('#human-color'),aiLevel=document.querySelector('#ai-level'),aiStatus=document.querySelector('#ai-status');
@@ -19,7 +20,7 @@ function cancelMovement(){movementRun++;movement?.cancel();movement=null;moving=
 function animateLastMove(entry){
   if(!entry||typeof board.getBoundingClientRect!=='function'||typeof board.children[0]?.querySelector!=='function')return;
   if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
-  const from=board.children[entry.from[0]*10+entry.from[1]],to=board.children[entry.to[0]*10+entry.to[1]],piece=to.querySelector('.piece');
+  const from=board.children[squareIndex(...entry.from)],to=board.children[squareIndex(...entry.to)],piece=to.querySelector('.piece');
   if(!piece?.animate)return;
   const a=from.getBoundingClientRect(),b=to.getBoundingClientRect();
   if(!a.width||!b.width)return;
@@ -173,6 +174,12 @@ function turnLabel(state){
 }
 
 function render(){
+  const flipButton=document.querySelector('#board-flip');
+  flipButton.hidden=!game.clock.started;flipButton.title=t('보드 뒤집기');flipButton.setAttribute('aria-label',t('보드 뒤집기'));flipButton.setAttribute('aria-pressed',String(boardFlipped));
+  for(let i=0;i<10;i++){
+    document.querySelector('#ranks').children[i].textContent=boardFlipped?i+1:10-i;
+    document.querySelector('#files').children[i].textContent=String.fromCharCode(97+(boardFlipped?9-i:i));
+  }
   const shareButton=document.querySelector('#share-result');
   if(shareButton){shareButton.hidden=!game.clock.started;shareButton.disabled=sharingResult||!game.winner&&!game.draw;shareButton.textContent=t(sharingResult?'이미지 생성 중…':'결과 공유');}
   const languageControls=document.querySelector('.language-controls');
@@ -234,6 +241,7 @@ function render(){
     };
     board.append(button);
   }));
+  if(boardFlipped){const squares=Array.from(board.children).reverse();board.replaceChildren();for(const square of squares)board.append(square);}
   if(shouldAnimate)animateLastMove(lastMove);
   const victoryNames={checkmate:t('체크메이트'),stalemate:t('스테일메이트'),promotion:t('프로모션'),timeout:t('시간'),kingCapture:t('킹 포획'),resign:t('기권')};
   const resultColor=gameMode.value==='local'?game.winner:onlineMode()?onlineSession?.color:humanColor.value;
@@ -293,6 +301,7 @@ document.querySelector('#join-room').onclick=()=>openOnline(false);
 document.querySelector('#copy-invite').onclick=async()=>{const link=document.querySelector('#invite-link');if(!link.value)return;try{await navigator.clipboard.writeText(link.value);document.querySelector('#online-status').textContent=t('초대 링크를 복사했습니다.');}catch{link.select();document.querySelector('#online-status').textContent=t('선택된 링크를 복사해주세요.');}};
 if(typeof location!=='undefined'){const room=new URL(location.href).searchParams.get('room');if(room){gameMode.value='online';document.querySelector('#room-code').value=room;render();}}
 
+document.querySelector('#board-flip').onclick=()=>{cancelMovement();boardFlipped=!boardFlipped;render();};
 document.querySelector('#board-focus').onclick=()=>{cancelMovement();boardFocus=!boardFocus;infoOpen=false;render();};
 let infoDrag=null,infoDragMoved=false,infoPosition=null;
 const infoControl=document.querySelector('#info-tab');
@@ -364,6 +373,7 @@ function resultSnapshot(){
   return {
     title:t('대칭 체스'),status:value('#status'),kings:value('#king-count'),summary:value('#match-summary'),
     times:[value('#time-white'),value('#time-black')],elapsed:value('#total-time'),scores:[value('#score-white'),value('#score-black')],
+    flipped:boardFlipped,
     squares:Array.from(board.children,square=>({background:getComputedStyle(square).backgroundColor,src:square.querySelector('img.piece')?.src||null})),
     captured:['white','black'].map(color=>game.captured[color].map(piece=>({src:Chess10Pieces.url(piece.type,piece.color)}))),
     history:Array.from(document.querySelector('#history').children,item=>item.textContent),
@@ -378,7 +388,7 @@ document.querySelector('#share-result').onclick=async()=>{
   try{
     cancelMovement();reviewIndex=null;selected=null;render();
     const snapshot=resultSnapshot();
-    resultText=[snapshot.title,snapshot.status,snapshot.kings,'',snapshot.settings,'',snapshot.labels.remaining,...snapshot.labels.sides.map((side,i)=>side+': '+snapshot.times[i]),snapshot.labels.elapsed+': '+snapshot.elapsed,'',snapshot.labels.score,...snapshot.labels.sides.map((side,i)=>side+': '+snapshot.scores[i]),'',snapshot.labels.captured,...snapshot.labels.sides.map((side,i)=>side+': '+snapshot.capturedNames[i]),'',snapshot.labels.history,...snapshot.history.map((entry,i)=>(i+1)+'. '+entry),'','https://orxodoxist.github.io/symmetric_chess/'].join('\r\n');
+    resultText=[snapshot.title,snapshot.status,snapshot.kings,'',snapshot.settings,'',snapshot.labels.remaining,...snapshot.labels.sides.map((side,i)=>side+': '+snapshot.times[i]),snapshot.labels.elapsed+': '+snapshot.elapsed,'',snapshot.labels.score,...snapshot.labels.sides.map((side,i)=>side+': '+snapshot.scores[i]),'',snapshot.labels.captured,...snapshot.labels.sides.map((side,i)=>side+': '+snapshot.capturedNames[i]),'',snapshot.labels.history,...snapshot.history.map((entry,i)=>(i+1)+'. '+entry),'','https://orthodoxist.github.io/symmetric_chess/'].join('\r\n');
     // Restore the viewer immediately; capture always represents the final live position.
     reviewIndex=savedReview;selected=savedSelection;render();
     resultBlob=await Chess10Share.capture(snapshot);

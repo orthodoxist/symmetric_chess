@@ -84,3 +84,5 @@ main:has(#setup-screen:not([hidden])) header{justify-content:center;text-align:c
 
 .match-overview .match-captured{padding-top:8px}
 #share-preview{width:min(1100px,94vw);max-width:94vw;max-height:90dvh;overflow:auto}#result-image{display:block;width:100%;height:auto;margin-bottom:16px}.share-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+
+#board-flip{display:inline-flex;align-items:center;justify-content:center;padding:8px 10px;min-width:40px;min-height:40px}#board-flip[hidden]{display:none}#board-flip[aria-pressed="true"]{background:#426b5e;border-color:#81b8aa}

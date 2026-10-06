@@ -19,7 +19,7 @@
       ctx.fillStyle=s.background;ctx.fillRect(x,y,size,size);
       if(s.src)ctx.drawImage(images.get(s.src),x+size*.09,y+size*.05,size*.82,size*.9);
     }
-    for(let i=0;i<10;i++){text(String(10-i),i===0?22:29,by+i*size+27,15,colors.muted);text(String.fromCharCode(97+i),bx+i*size+32,by+770,15,colors.muted);}
+    for(let i=0;i<10;i++){text(String(data.flipped?i+1:10-i),(data.flipped?i===9:i===0)?22:29,by+i*size+27,15,colors.muted);text(String.fromCharCode(97+(data.flipped?9-i:i)),bx+i*size+32,by+770,15,colors.muted);}
     box(844,99,724,808);box(863,117,686,38,'#426b5e',6);text(data.labels.overview,1148,126,17,colors.text,true);
     const lx=864,rx=1212;ctx.strokeStyle=colors.border;ctx.beginPath();ctx.moveTo(1194,174);ctx.lineTo(1194,888);ctx.stroke();
     text(data.summary,lx,177,18,colors.text,true,310);text(data.labels.remaining,lx,218,18,colors.text,true);
@@ -37,7 +37,7 @@
     const visible=data.history.slice(-27),offset=data.history.length-visible.length;
     if(offset)text('…',rx,208,16,colors.muted);
     visible.forEach((entry,i)=>text((offset+i+1)+'. '+entry,rx,234+i*24,14,colors.text,false,326));
-    text('orxodoxist.github.io/symmetric_chess',864,876,13,colors.muted);
+    text('orthodoxist.github.io/symmetric_chess',864,876,13,colors.muted);
     return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('PNG export failed')),'image/png'));
   }
   function save(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
