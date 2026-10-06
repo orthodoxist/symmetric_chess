@@ -89,6 +89,6 @@ main:has(#setup-screen:not([hidden])) header{justify-content:center;text-align:c
 
 /* Match the three board controls to the expand button. */
 .view-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-#share-result,#board-flip,#board-focus{width:91.03125px;height:40px;padding:10px 16px;font-size:13.3333px;line-height:normal;white-space:nowrap}
+#share-result,#board-flip,#board-focus{width:91.03125px;height:40px;min-height:0;padding:10px 16px;font-size:13.3333px;line-height:normal;white-space:nowrap}
 html[lang="en"] #share-result,html[lang="en"] #board-flip,html[lang="en"] #board-focus{width:120px}
 @media(max-width:520px){#share-result,#board-flip,#board-focus{width:72px;height:35px;padding:8px 10px;font-size:12px}html[lang="en"] #share-result,html[lang="en"] #board-flip,html[lang="en"] #board-focus{width:104px}}
