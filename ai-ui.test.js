@@ -19,7 +19,6 @@ function setup(){
   vm.runInContext(fs.readFileSync('engine.js','utf8'),context);
   vm.runInContext(fs.readFileSync('material.js','utf8'),context);
   vm.runInContext(fs.readFileSync('pieces.js','utf8'),context);
-  vm.runInContext(fs.readFileSync('series.js','utf8'),context);
   vm.runInContext(fs.readFileSync('app.js','utf8'),context);
   return {element,timers,intervals,requests,run:code=>vm.runInContext(code,context),
     click:(r,c)=>element('#board').children[r*10+c].onclick(),
@@ -54,12 +53,6 @@ function setup(){
   assert.equal(h.element('#board').children.length,100);
   assert.equal(h.element('#board').children[35].children.find(c=>c.className?.startsWith('move-comment')).textContent,'!');
   assert.equal(h.element('#board').children.flatMap(e=>e.children).filter(e=>e.className?.startsWith('move-comment')).length,1);
-  // A two-game match swaps the human side, stores both results, and stops after two games.
-  h=setup();h.element('#match-format').value='two';h.element('#human-color').value='black';h.element('#start').onclick();
-  h.run("game.winner='black';game.winReason='kingCapture';render();");assert.equal(h.run('game.series.rounds.length'),1);assert.equal(h.element('#next-round').hidden,false);
-  h.element('#next-round').onclick();assert.equal(h.element('#human-color').value,'white');assert.equal(h.run('game.series.round'),2);assert.equal(h.run('game.history.length'),0);
-  h.run("game.draw='repetition';render();");assert.equal(h.run('Chess10Series.result(game.series).winner'),0);assert.equal(h.element('#next-round').hidden,true);
-  h.element('#restart').onclick();assert.equal(h.run('game.series'),undefined);
   // Flipping changes display order while clicks retain their original coordinates.
   h=setup();h.element('#game-mode').value='local';h.element('#start').onclick();
   const first=h.element('#board').children[0],last=h.element('#board').children[99];

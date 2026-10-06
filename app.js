@@ -12,7 +12,6 @@ let game=Chess10.createGame(Number(document.querySelector('#time-control').value
 let sharingResult=false,boardFlipped=false;
 const squareIndex=(r,c)=>boardFlipped?99-(r*10+c):r*10+c;
 const board=document.querySelector('#board'),dialog=document.querySelector('#promotion');
-const matchFormat=document.querySelector('#match-format');
 const timeControl=document.querySelector('#time-control'),startButton=document.querySelector('#start');
 const gameMode=document.querySelector('#game-mode'),humanColor=document.querySelector('#human-color'),aiLevel=document.querySelector('#ai-level'),aiStatus=document.querySelector('#ai-status');
 let aiThinking=false,aiRun=0,aiError=false;
@@ -50,11 +49,11 @@ async function openOnline(host){
     const Peer=await Chess10Online.loadPeer();if(run!==onlineRun)return;
     let token=crypto.randomUUID();
     if(!host){try{const key='chess-room-'+room;token=sessionStorage.getItem(key)||token;sessionStorage.setItem(key,token);}catch{}}
-    onlineSession=new Chess10Online.Session({Peer,host,color:humanColor.value,minutes:Number(timeControl.value),twoGames:matchFormat.value==='two',token,
+    onlineSession=new Chess10Online.Session({Peer,host,color:humanColor.value,minutes:Number(timeControl.value),token,
       onChat:messages=>{if(run!==onlineRun)return;const previous=chatMessages.length;chatMessages=messages;if((panelPage!=='chat'||boardFocus&&!infoOpen)&&messages.length>previous&&messages.at(-1)?.color!==onlineSession?.color)chatUnread++;renderChat();},
       onRoom:id=>{if(run!==onlineRun)return;const url=new URL(location.href);url.search='';url.hash='';url.searchParams.set('room',id);document.querySelector('#invite-link').value=url.href;onlineMessage='초대 링크를 상대에게 보내주세요. 입장하면 대국이 시작됩니다.';render();},
       onStatus:message=>{if(run!==onlineRun)return;onlineMessage=message;document.querySelector('#online-status').textContent=typeof Chess10I18n==='undefined'?message:Chess10I18n.message(message);if(!moving)render();},
-      onState:(state,changed)=>{if(run!==onlineRun)return;game=state;matchFormat.value=game.series?'two':'single';timeControl.value=String(onlineSession.minutes);humanColor.value=onlineSession.color;if(changed){selected=null;if(!game.pending&&dialog.open)dialog.close();if(!onlineSending){cancelMovement();render();}}else renderClocks();}
+      onState:(state,changed)=>{if(run!==onlineRun)return;game=state;timeControl.value=String(onlineSession.minutes);humanColor.value=onlineSession.color;if(changed){selected=null;if(!game.pending&&dialog.open)dialog.close();if(!onlineSending){cancelMovement();render();}}else renderClocks();}
     });
     game=onlineSession.game;animatedGame=game;animatedCount=0;onlineConnecting=false;
     if(!host)onlineSession.join(room);render();
@@ -174,39 +173,7 @@ function turnLabel(state){
   return typeof Chess10I18n!=='undefined'&&Chess10I18n.language==='en'?colorName(state.turn)+' to move':colorName(state.turn)+'의 차례';
 }
 
-
-function seriesPlayer(){return onlineMode()&&onlineSession&&!onlineSession.host?1:0;}
-function seriesOutcome(score){return t(score>0?'승리':score<0?'패배':'무승부');}
-function seriesTime(seconds){return String(Math.floor(seconds/3600)).padStart(2,'0')+':'+String(Math.floor(seconds/60)%60).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
-function seriesFinalText(){
-  const result=Chess10Series.result(game.series);if(!result)return '';
-  const mine=seriesPlayer(),label=result.winner===null?t('최종 무승부'):result.winner===mine?t('최종 승리'):t('최종 패배');
-  return label+' · '+t(result.reason==='results'?'두 판의 결과로 판정':result.reason==='time'?'누적 사용시간으로 판정':'누적 사용시간도 동일')+' · '+t('나')+' '+seriesTime(result.seconds[mine])+' / '+t('상대')+' '+seriesTime(result.seconds[1-mine]);
-}
-function seriesText(){
-  const series=game.series;if(!series)return '';
-  const mine=seriesPlayer();return ['Two games',...series.rounds.map((round,i)=>(i+1)+'/2 · '+colorName(mine===0?round.firstColor:round.firstColor==='white'?'black':'white')+' · '+seriesOutcome(round.score*(mine===0?1:-1))+' · '+t('나')+' '+seriesTime(Math.floor(round.used[mine]/1000))+' / '+t('상대')+' '+seriesTime(Math.floor(round.used[1-mine]/1000))),seriesFinalText()].filter(Boolean).join('\n');
-}
-function renderSeries(){
-  const panel=document.querySelector('#series-panel'),next=document.querySelector('#next-round');
-  panel.hidden=!game.series;next.hidden=true;if(!game.series)return;
-  const series=game.series,mine=seriesPlayer();
-  document.querySelector('#series-round').textContent=series.round+'/2 · '+t('내 진영: ')+colorName(Chess10Series.color(series,mine));
-  const list=document.querySelector('#series-results');list.replaceChildren();
-  for(let i=0;i<series.rounds.length;i++){
-    const round=series.rounds[i],line=document.createElement('p');line.className='small';
-    line.textContent=(i+1)+'/2 · '+colorName(mine===0?round.firstColor:round.firstColor==='white'?'black':'white')+' · '+seriesOutcome(round.score*(mine===0?1:-1))+' · '+t('나')+' '+seriesTime(Math.floor(round.used[mine]/1000))+' / '+t('상대')+' '+seriesTime(Math.floor(round.used[1-mine]/1000));list.append(line);
-  }
-  document.querySelector('#series-final').textContent=seriesFinalText();
-  if(series.round===1&&series.rounds.length===1){
-    next.hidden=false;next.disabled=sharingResult||Boolean(onlineMode()&&(!onlineSession?.ready||onlineSession.busy||series.ready[mine]));
-    next.textContent=t(onlineMode()&&series.ready[mine]?'상대의 준비를 기다립니다.':'두 번째 판 시작');
-  }
-}
-
 function render(){
-  if(!onlineMode()&&typeof Chess10Series!=='undefined')Chess10Series.record(game);
-  renderSeries();
   const flipButton=document.querySelector('#board-flip');
   flipButton.hidden=!game.clock.started;flipButton.textContent=t('보드 회전');flipButton.title=t('보드 회전');flipButton.setAttribute('aria-label',t('보드 회전'));flipButton.setAttribute('aria-pressed',String(boardFlipped));
   for(let i=0;i<10;i++){
@@ -281,10 +248,6 @@ function render(){
   const outcome=resultColor===game.winner;
   const resultLabel=typeof Chess10I18n!=='undefined'&&Chess10I18n.language==='en'?colorName(resultColor)+' '+(outcome?'wins':'loses')+' by '+(victoryNames[game.winReason]||'king capture'):colorName(resultColor)+' '+(victoryNames[game.winReason]||'')+' '+(outcome?t('승리'):t('패배'));
   document.querySelector('#status').textContent=game.winner?resultLabel+(gameMode.value==='ai'?t(' · 컴퓨터 난이도: ')+difficultyName():''):game.draw?t('무승부 · ')+(game.draw==='repetition'?t('5회 반복'):t('50수 규칙')):!game.clock.started?t('시간을 선택하고 대국을 시작하세요'):game.pending?colorName(game.turn)+t(' · 프로모션 선택'):turnLabel(game);
-  if(game.series){
-    const final=Chess10Series.result(game.series),status=document.querySelector('#status');
-    status.textContent=final?'Two games · '+t(final.winner===null?'최종 무승부':final.winner===seriesPlayer()?'최종 승리':'최종 패배')+' · '+t(final.reason==='results'?'두 판의 결과로 판정':final.reason==='time'?'누적 사용시간으로 판정':'누적 사용시간도 동일'):game.series.round+'/2 · '+status.textContent;
-  }
   const positionNumber=reviewing?reviewIndex:game.history.length;
 
   if(reviewing)document.querySelector('#status').textContent=turnLabel(view);
@@ -295,8 +258,6 @@ function render(){
   document.querySelector('#join-room').disabled=onlineConnecting||Boolean(onlineSession);
   startButton.hidden=onlineMode();
   timeControl.disabled=game.clock.started||Boolean(onlineSession);
-  matchFormat.disabled=game.clock.started||gameMode.value==='local'||onlineConnecting;
-  document.querySelector('#two-games-help').hidden=gameMode.value==='local'||matchFormat.value!=='two';
   startButton.disabled=game.clock.started;
   gameMode.disabled=game.clock.started;
   humanColor.disabled=game.clock.started||gameMode.value==='local';
@@ -321,7 +282,7 @@ function render(){
 dialog.addEventListener('cancel',e=>e.preventDefault());
 document.querySelector('#restart').onclick=()=>{if(game.clock.started&&!confirm(t('현재 게임을 끝내고 홈 화면으로 이동할까요?')))return;cancelAI();cancelMovement();closeOnline();game=Chess10.createGame(Number(timeControl.value));selected=null;dialog.close();render();};
 timeControl.onchange=()=>{if(game.clock.started)return;game=Chess10.createGame(Number(timeControl.value));selected=null;render();};
-startButton.onclick=()=>{if(game.clock.started||onlineMode())return;if(matchFormat.value==='two'&&gameMode.value==='ai')game.series=Chess10Series.create(humanColor.value,Number(timeControl.value));Chess10.startClock(game);render();};
+startButton.onclick=()=>{if(game.clock.started||onlineMode())return;Chess10.startClock(game);render();};
 gameMode.onchange=()=>{if(!game.clock.started){cancelAI();closeOnline();game=Chess10.createGame(Number(timeControl.value));selected=null;render();}};
 humanColor.onchange=()=>{if(!game.clock.started){cancelAI();selected=null;render();}};
 aiLevel.onchange=()=>{if(!game.clock.started){cancelAI();render();}};
@@ -340,13 +301,6 @@ document.querySelector('#join-room').onclick=()=>openOnline(false);
 document.querySelector('#copy-invite').onclick=async()=>{const link=document.querySelector('#invite-link');if(!link.value)return;try{await navigator.clipboard.writeText(link.value);document.querySelector('#online-status').textContent=t('초대 링크를 복사했습니다.');}catch{link.select();document.querySelector('#online-status').textContent=t('선택된 링크를 복사해주세요.');}};
 if(typeof location!=='undefined'){const room=new URL(location.href).searchParams.get('room');if(room){gameMode.value='online';document.querySelector('#room-code').value=room;render();}}
 
-matchFormat.onchange=()=>{if(!game.clock.started)render();};
-document.querySelector('#next-round').onclick=()=>{
-  if(sharingResult||!game.series||game.series.round!==1||game.series.rounds.length!==1)return;
-  if(onlineMode()){onlineSession?.action({kind:'next-round'});render();return;}
-  cancelAI();cancelMovement();selected=null;reviewIndex=null;dialog.close();
-  game=Chess10Series.next(game,Chess10);humanColor.value=Chess10Series.color(game.series);Chess10.startClock(game);render();
-};
 document.querySelector('#board-flip').onclick=()=>{cancelMovement();boardFlipped=!boardFlipped;render();};
 document.querySelector('#board-focus').onclick=()=>{cancelMovement();boardFocus=!boardFocus;infoOpen=false;render();};
 let infoDrag=null,infoDragMoved=false,infoPosition=null;
@@ -417,14 +371,13 @@ const resultFileName=()=> 'symmetric-chess-result.png';
 function resultSnapshot(){
   const value=id=>document.querySelector(id).textContent;
   return {
-    seriesLines:game.series?seriesText().split('\n'):[],
     title:t('대칭 체스'),status:value('#status'),kings:value('#king-count'),summary:value('#match-summary'),
     times:[value('#time-white'),value('#time-black')],elapsed:value('#total-time'),scores:[value('#score-white'),value('#score-black')],
     flipped:boardFlipped,
     squares:Array.from(board.children,square=>({background:getComputedStyle(square).backgroundColor,src:square.querySelector('img.piece')?.src||null})),
     captured:['white','black'].map(color=>game.captured[color].map(piece=>({src:Chess10Pieces.url(piece.type,piece.color)}))),
     history:Array.from(document.querySelector('#history').children,item=>item.textContent),
-    settings:t('대국 설정')+': '+value('#match-summary')+(game.series?'\n'+seriesText():'')+(gameMode.value==='local'?'':'\n'+t('내 진영')+': '+colorName(onlineMode()?onlineSession.color:humanColor.value)),
+    settings:t('대국 설정')+': '+value('#match-summary')+(gameMode.value==='local'?'':'\n'+t('내 진영')+': '+colorName(onlineMode()?onlineSession.color:humanColor.value)),
     capturedNames:['white','black'].map(color=>game.captured[color].map(piece=>names[piece.type]).join(', ')||'—'),
     labels:{overview:t('대국 현황'),remaining:t('남은 시간'),elapsed:t('총 대국시간'),score:t('기물 점수'),captured:t('포획된 기물'),history:t('이동 기록'),sides:[t('백'),t('흑')]}
   };

@@ -3,5 +3,5 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const output=path.join(root,'dist');
 fs.mkdirSync(output,{recursive:true});
-for(const name of ['index.html','favicon.svg','style.css','engine.js','ai.js','material.js','pieces.js','series.js','online.js','i18n.js','share.js','app.js'])fs.copyFileSync(path.join(root,name),path.join(output,name));
+for(const name of ['index.html','favicon.svg','style.css','engine.js','ai.js','material.js','pieces.js','online.js','i18n.js','share.js','app.js'])fs.copyFileSync(path.join(root,name),path.join(output,name));
 console.log('Built static game assets.');

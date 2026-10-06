@@ -1,7 +1,7 @@
 (function(root){
   // Render only the explicit result fields: chat messages and invite links never enter the image.
   async function capture(data){
-    const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=950+(data.seriesLines?.length?data.seriesLines.length*28+24:0);
+    const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=950;
     const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas unavailable');
     const colors={bg:'#10171d',panel:'#19232c',border:'#344650',text:'#e5e9ee',muted:'#a7b5bd'};
     const text=(value,x,y,size=18,color=colors.text,bold=false,maxWidth)=>{ctx.font=(bold?'600 ':'')+size+'px system-ui, sans-serif';ctx.fillStyle=color;ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(value,x,y,maxWidth);};
@@ -9,7 +9,7 @@
     const load=src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});
     const sources=[...new Set([...data.squares.map(s=>s.src),...data.captured.flat().map(s=>s.src)].filter(Boolean))];
     const images=new Map(await Promise.all(sources.map(async src=>[src,await load(src)])));
-    ctx.fillStyle=colors.bg;ctx.fillRect(0,0,1600,canvas.height);
+    ctx.fillStyle=colors.bg;ctx.fillRect(0,0,1600,950);
     text(data.title,32,22,25,colors.text,true);text(data.status,32,65,20,colors.text,true,790);
     text(data.kings,48,99,17,colors.muted,true,770);
     const bx=54,by=137,size=76;
@@ -38,7 +38,6 @@
     if(offset)text('…',rx,208,16,colors.muted);
     visible.forEach((entry,i)=>text((offset+i+1)+'. '+entry,rx,234+i*24,14,colors.text,false,326));
     text('orthodoxist.github.io/symmetric_chess',864,876,13,colors.muted);
-    (data.seriesLines||[]).forEach((line,i)=>text(line,32,950+i*28,18,colors.text,i===0,1536));
     return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('PNG export failed')),'image/png'));
   }
   function save(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
