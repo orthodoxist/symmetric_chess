@@ -1,15 +1,16 @@
 (function(root){
   const rules=typeof module!=='undefined'?require('./engine.js'):root.Chess10;
-  const PROTOCOL='symmetric-chess-v2-draw5-50';
+  const seriesRules=typeof module!=='undefined'?require('./series.js'):root.Chess10Series;
+  const PROTOCOL='symmetric-chess-v3-two-games';
   function pack(game){
     return {...game,repetitions:[...game.repetitions],history:game.history.map(({captureBadge,valueBubbleUntil,...entry})=>entry)};
   }
   function unpack(data){return {...data,repetitions:new Map(data.repetitions),clock:{...data.clock,remaining:{...data.clock.remaining},last:Date.now()}};}
   const validSquare=p=>Array.isArray(p)&&p.length===2&&p.every(n=>Number.isInteger(n)&&n>=0&&n<10);
   class Session{
-    constructor({Peer,host=false,color='white',minutes=15,token,onState=()=>{},onStatus=()=>{},onRoom=()=>{},onChat=()=>{},now=Date.now}){
+    constructor({Peer,host=false,color='white',minutes=15,twoGames=false,token,onState=()=>{},onStatus=()=>{},onRoom=()=>{},onChat=()=>{},now=Date.now}){
       Object.assign(this,{host,color,minutes,token,onState,onStatus,onRoom,onChat,now});
-      this.game=rules.createGame(minutes);this.revision=0;this.ready=false;this.closed=false;this.busy=false;
+      this.game=rules.createGame(minutes);if(host&&twoGames)this.game.series=seriesRules.create(color,minutes);this.revision=0;this.ready=false;this.closed=false;this.busy=false;
       this.peer=new Peer({debug:0});
       this.peer.on('open',id=>{if(host)this.onRoom(id);else if(this.room)this.connect();});
       this.peer.on('connection',conn=>{if(this.host)this.accept(conn);else conn.close();});
@@ -46,6 +47,7 @@
       conn.on('error',error=>{console.error('Chess data connection error',error);this.onStatus(error.type==='message-too-big'?'대국 데이터 전송 크기 오류입니다. 두 플레이어 모두 최신 화면으로 다시 접속해주세요.':'대국 연결에 문제가 있습니다. 네트워크를 확인해주세요.');});
     }
     broadcast(){
+      if(this.host)seriesRules.record(this.game);
       if(this.conn?.open)this.conn.send({kind:'state',protocol:PROTOCOL,revision:this.revision,color:this.color==='white'?'black':'white',minutes:this.minutes,game:pack(this.game),chat:this.chatLog()});
     }
     receive(message){
@@ -68,11 +70,12 @@
       if(!message.game||!Array.isArray(message.game.board)||message.game.board.length!==10||!Array.isArray(message.game.repetitions))return;
       if(message.chat)this.acceptChatLog(message.chat);
       const changed=!this.game.clock.started||message.revision!==this.revision||message.game.winner!==this.game.winner||message.game.draw!==this.game.draw;
-      const oldHistory=this.game.history;
+      const newRound=message.game.series?.round!==this.game.series?.round;
+      const oldHistory=newRound?[]:this.game.history;
       const state=unpack(message.game);
       // Preserve local bubble expiry and animation state across clock snapshots.
       state.history.forEach((entry,i)=>{if(i<oldHistory.length){entry.captureBadge=oldHistory[i].captureBadge;entry.valueBubbleUntil=oldHistory[i].valueBubbleUntil;}});
-      Object.assign(this.game,state);this.color=message.color;this.minutes=message.minutes;this.revision=message.revision;this.busy=false;this.ready=true;
+      if(newRound)this.game=state;else Object.assign(this.game,state);this.color=message.color;this.minutes=message.minutes;this.revision=message.revision;this.busy=false;this.ready=true;
       this.onState(this.game,changed);
     }
     chatLog(){return this.messages||[];}
@@ -98,12 +101,23 @@
     }
 
     action(action){
-      if(!this.ready||this.busy||this.game.turn!==this.color||this.game.winner||this.game.draw)return false;
+      if(!this.ready||this.busy)return false;
+      if(action?.kind!=='next-round'&&(this.game.turn!==this.color||this.game.winner||this.game.draw))return false;
       if(this.host)return this.apply(action,this.color,this.revision);
       this.busy=true;this.conn.send({kind:'action',revision:this.revision,action});return true;
     }
     apply(action,color,revision){
       rules.tickClock(this.game,this.now());
+      seriesRules.record(this.game);
+      if(action?.kind==='next-round'){
+        const series=this.game.series;
+        if((!Number.isInteger(revision)||revision>this.revision||revision<0)||!this.ready||!series||series.round!==1||series.rounds.length!==1||!this.game.winner&&!this.game.draw){this.broadcast();return false;}
+        const player=color===this.color?0:1;
+        if(!['white','black'].includes(color)||series.ready[player]){this.broadcast();return false;}
+        series.ready[player]=true;
+        if(series.ready.every(Boolean)){this.game=seriesRules.next(this.game,rules);this.color=seriesRules.color(this.game.series);rules.startClock(this.game,this.now());}
+        this.revision++;this.broadcast();this.onState(this.game,true);return true;
+      }
       let accepted=false;
       if(revision===this.revision&&color===this.game.turn&&!this.game.winner&&!this.game.draw&&action){
         if(action.kind==='move'&&validSquare(action.from)&&validSquare(action.to))accepted=rules.move(this.game,...action.from,...action.to);
