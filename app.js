@@ -175,7 +175,7 @@ function turnLabel(state){
 
 function render(){
   const flipButton=document.querySelector('#board-flip');
-  flipButton.hidden=!game.clock.started;flipButton.title=t('보드 뒤집기');flipButton.setAttribute('aria-label',t('보드 뒤집기'));flipButton.setAttribute('aria-pressed',String(boardFlipped));
+  flipButton.hidden=!game.clock.started;flipButton.textContent=t('보드 회전');flipButton.title=t('보드 회전');flipButton.setAttribute('aria-label',t('보드 회전'));flipButton.setAttribute('aria-pressed',String(boardFlipped));
   for(let i=0;i<10;i++){
     document.querySelector('#ranks').children[i].textContent=boardFlipped?i+1:10-i;
     document.querySelector('#files').children[i].textContent=String.fromCharCode(97+(boardFlipped?9-i:i));
