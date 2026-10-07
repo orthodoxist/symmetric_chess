@@ -10,7 +10,7 @@
     '방장은 진영과 제한시간을 선택하고 방을 만드세요. 상대는 초대 링크로 입장합니다.':'Choose your side and time limit, then create a room. Your opponent joins using the invite link.',
     '방 만들기':'Create room','초대 링크':'Invite link','방을 만들면 표시됩니다':'Appears after you create a room','초대 링크 복사':'Copy invite link','상대가 보낸 링크 입력':'Paste your opponent’s invite link','방 입장':'Join room','대국 시작':'Start game','게임 규칙':'Game rules',
     '시작 배치는 R N B Q K K Q B N R 입니다.':'The starting back rank is R N B Q K K Q B N R.',
-    '기물 규칙에 따른 승리는 체크메이트로만 판정합니다. 시간패는 유지됩니다.':'Board play is won only by checkmate. Losing on time still applies.',
+    '상대 킹 2개를 모두 포획하면 승리합니다.':'Capture both of your opponent’s kings to win.',
     '폰은 첫 이동을 포함해 항상 1칸만 전진할 수 있습니다.':'A pawn may advance only one square, including on its first move.',
     '캐슬링과 앙파상은 없습니다.':'There is no castling or en passant.',
     '프로모션은 포획된 자신의 비폰 기물만 선택할 수 있습니다. 포획된 킹도 선택 가능합니다.':'A pawn can promote only to one of your captured non-pawn pieces, including a captured king.',
