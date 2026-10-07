@@ -15,7 +15,7 @@
     '캐슬링과 앙파상은 없습니다.':'There is no castling or en passant.',
     '프로모션은 포획된 자신의 비폰 기물만 선택할 수 있습니다. 포획된 킹도 선택 가능합니다.':'A pawn can promote only to one of your captured non-pawn pieces, including a captured king.',
     '포획된 자신의 비폰 기물이 없으면 폰은 마지막 랭크로 이동하거나 포획할 수 없습니다.':'A pawn cannot advance or capture onto the final rank unless you have a captured non-pawn piece to bring back.',
-    '마지막 킹의 포획 위험을 남기는 수와 마지막 킹의 직접 포획은 금지됩니다. 합법적인 수가 없으면 마지막 킹이 공격받는 경우 체크메이트, 그 외에는 스테일메이트 무승부입니다.':'You cannot leave your last king exposed or capture the opponent’s last king directly. With no legal moves, an attacked last king means checkmate; otherwise the game is drawn by stalemate.',
+    '다음 상대 수에 마지막 킹이 포획될 수 이동은 금지되며, 가능한 수가 없으면 마지막 킹이 공격받는 경우 체크메이트, 그 외에는 스테일메이트 무승부입니다.':'You cannot leave your last king exposed or capture the opponent’s last king directly. With no legal moves, an attacked last king means checkmate; otherwise the game is drawn by stalemate.',
     '같은 차례와 기물 배치가 5회 반복되면 무승부입니다.':'The game is drawn when the same position occurs five times with the same side to move.',
     '폰 이동이나 포획 없이 양쪽이 각각 50수(총 100회 행마)를 진행하면 무승부입니다.':'The game is drawn after each player makes 50 moves (100 plies in total) without a pawn move or capture.',
     '보드 회전':'Rotate board','크게 보기':'Expand board','작게 보기':'Shrink board','홈 화면':'Home','대국 정보':'Game info','정보 닫기':'Close info','대국 현황':'Overview','채팅':'Chat','대국 채팅':'Game chat','대국 시간':'Clocks','남은 시간':'Time remaining','총 대국시간':'Elapsed time','기물 점수':'Material score','이동 기록':'Move history','포획된 기물':'Captured pieces','백이 잃은 기물':'White’s lost pieces','흑이 잃은 기물':'Black’s lost pieces',
