@@ -17,7 +17,7 @@
     '포획된 자신의 비폰 기물이 없으면 폰은 마지막 랭크로 이동하거나 포획할 수 없습니다.':'A pawn cannot advance or capture onto the final rank unless you have a captured non-pawn piece to bring back.',
     '다음 상대 수에 마지막 킹이 포획될 수 이동은 금지되며, 가능한 수가 없으면 마지막 킹이 공격받는 경우 체크메이트, 그 외에는 스테일메이트 무승부입니다.':'You cannot leave your last king exposed or capture the opponent’s last king directly. With no legal moves, an attacked last king means checkmate; otherwise the game is drawn by stalemate.',
     '같은 차례와 기물 배치가 5회 반복되면 무승부입니다.':'The game is drawn when the same position occurs five times with the same side to move.',
-    '폰 이동이나 포획 없이 양쪽이 각각 50수(총 100회 행마)를 진행하면 무승부입니다.':'The game is drawn after each player makes 50 moves (100 plies in total) without a pawn move or capture.',
+    '폰 이동이나 포획 없이 양쪽이 각각 50수를 진행하면 무승부입니다.':'The game is drawn after each player makes 50 moves without a pawn move or capture.',
     '보드 회전':'Rotate board','크게 보기':'Expand board','작게 보기':'Shrink board','홈 화면':'Home','대국 정보':'Game info','정보 닫기':'Close info','대국 현황':'Overview','채팅':'Chat','대국 채팅':'Game chat','대국 시간':'Clocks','남은 시간':'Time remaining','총 대국시간':'Elapsed time','기물 점수':'Material score','이동 기록':'Move history','포획된 기물':'Captured pieces','백이 잃은 기물':'White’s lost pieces','흑이 잃은 기물':'Black’s lost pieces',
     '백':'White','흑':'Black','룩':'Rook','나이트':'Knight','비숍':'Bishop','퀸':'Queen','킹':'King','폰':'Pawn',
     '돌아올 기물을 선택하세요':'Choose a piece to bring back','포획된 자신의 비폰 기물 중 하나로 프로모션합니다.':'Promote to one of your captured non-pawn pieces.',
