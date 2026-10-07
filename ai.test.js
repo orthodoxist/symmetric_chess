@@ -14,12 +14,12 @@ function play(g,action){
     assert.equal(JSON.stringify({board:g.board,history:g.history,captured:g.captured,turn:g.turn,repetitions:[...g.repetitions]}),before);play(g,action);
   }
   let g=empty();g.board[1][4]={type:'P',color:'white',moved:true};
-  const winning=await chooseAction(g,{level:'hard',budgetMs:500});play(g,winning);assert.equal(g.winner,'white');assert.equal(g.winReason,'promotion');
+  const winning=await chooseAction(g,{level:'hard',budgetMs:500});play(g,winning);assert.equal(g.winner,null);assert.notDeepEqual(winning.from,[1,4]);
   g=empty();g.turn='black';g.board[8][4]={type:'P',color:'black',moved:true};
-  play(g,await chooseAction(g,{level:'medium',budgetMs:500}));assert.equal(g.winner,'black');assert.equal(g.winReason,'promotion');
+  const blackAction=await chooseAction(g,{level:'medium',budgetMs:500});play(g,blackAction);assert.equal(g.winner,null);assert.notDeepEqual(blackAction.from,[8,4]);
   g=empty();g.board[1][4]={type:'P',color:'white',moved:true};g.captured.white=[{type:'Q',color:'white'}];
   play(g,await chooseAction(g,{level:'easy',budgetMs:100,random:()=>0}));assert.equal(g.board[0][4].type,'Q');assert.equal(g.pending,null);assert.equal(g.turn,'black');
-  // AI must defend against a promotion victory, rather than play elsewhere.
+  // A pawn with no captured non-pawn pieces poses no promotion victory threat.
   g=empty();g.board[8][4]={type:'P',color:'black',moved:true};g.board[9][0]={type:'R',color:'white'};
   play(g,await chooseAction(g,{level:'medium',budgetMs:150}));assert.equal(rules.winningThreats(g).black.length,0);
   g=empty();g.board[9][9]=null;g.board[2][0]={type:'K',color:'white'};g.board[1][3]={type:'Q',color:'white'};
@@ -38,5 +38,5 @@ function play(g,action){
   assert.notEqual(expert.from.join(',')+':'+expert.to.join(','),'5,5:5,7');play(g,expert);
   g=rules.createGame();let cancelled=false;setTimeout(()=>cancelled=true,10);
   assert.equal(await chooseAction(g,{level:'hard',budgetMs:10000,shouldCancel:()=>cancelled}),null);
-  console.log('Passed: all difficulties, legal moves for both colors, immediate wins, automatic promotion, forced defense, mate selection, cancellation, terminal state, cooperative yielding, AI self-play.');
+  console.log('Passed: all difficulties, legal moves for both colors, blocked promotion wins, automatic normal promotion, forced defense, mate selection, cancellation, terminal state, cooperative yielding, AI self-play.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

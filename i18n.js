@@ -1,6 +1,6 @@
 (function(root){
   const en={
-    '대칭 체스':'Symmetric Chess','두 킹을 모두 잡아 완성하는 승리':'Capture both kings to win',
+    '대칭 체스':'Symmetric Chess','마지막 킹의 체크메이트로 완성하는 승리':'Win by checkmating the last king',
     '대국 설정':'Game setup','대국 방식':'Game mode','혼자 연습':'Practice','컴퓨터와 대결':'Play the computer','사람과 대결':'Play a human','온라인 대결':'Human','컴퓨터 대결':'Computer',
     '내 진영':'Your side','백 · 선공':'White · moves first','흑 · 후공':'Black · moves second','컴퓨터 난이도':'Computer difficulty',
     '쉬움 · 최대 3초':'Easy · up to 3 seconds','보통 · 최대 6초':'Normal · up to 6 seconds','어려움 · 최대 10초':'Hard · up to 10 seconds',
@@ -10,12 +10,12 @@
     '방장은 진영과 제한시간을 선택하고 방을 만드세요. 상대는 초대 링크로 입장합니다.':'Choose your side and time limit, then create a room. Your opponent joins using the invite link.',
     '방 만들기':'Create room','초대 링크':'Invite link','방을 만들면 표시됩니다':'Appears after you create a room','초대 링크 복사':'Copy invite link','상대가 보낸 링크 입력':'Paste your opponent’s invite link','방 입장':'Join room','대국 시작':'Start game','게임 규칙':'Game rules',
     '시작 배치는 R N B Q K K Q B N R 입니다.':'The starting back rank is R N B Q K K Q B N R.',
-    '상대 킹 2개를 모두 포획하면 승리합니다.':'Capture both of your opponent’s kings to win.',
+    '기물 규칙에 따른 승리는 체크메이트로만 판정합니다. 시간패는 유지됩니다.':'Board play is won only by checkmate. Losing on time still applies.',
     '폰은 첫 이동을 포함해 항상 1칸만 전진할 수 있습니다.':'A pawn may advance only one square, including on its first move.',
     '캐슬링과 앙파상은 없습니다.':'There is no castling or en passant.',
     '프로모션은 포획된 자신의 비폰 기물만 선택할 수 있습니다. 포획된 킹도 선택 가능합니다.':'A pawn can promote only to one of your captured non-pawn pieces, including a captured king.',
-    '프로모션 시 자신의 비폰 기물이 모두 살아 있으면 승리합니다.':'You win by promoting a pawn if all of your non-pawn pieces are still on the board.',
-    '다음 상대 수에 마지막 킹이 포획되거나 상대가 프로모션으로 승리할 수 있는 이동은 금지되며, 가능한 수가 없으면 마지막 킹이 공격받는 경우 체크메이트, 그 외에는 스테일메이트 무승부입니다.':'A move is illegal if it allows your opponent to capture your last king or win by promotion on their next move. If you have no legal moves, you lose by checkmate when your last king is under attack, and draw by stalemate otherwise.',
+    '포획된 자신의 비폰 기물이 없으면 폰은 마지막 랭크로 이동하거나 포획할 수 없습니다.':'A pawn cannot advance or capture onto the final rank unless you have a captured non-pawn piece to bring back.',
+    '마지막 킹의 포획 위험을 남기는 수와 마지막 킹의 직접 포획은 금지됩니다. 합법적인 수가 없으면 마지막 킹이 공격받는 경우 체크메이트, 그 외에는 스테일메이트 무승부입니다.':'You cannot leave your last king exposed or capture the opponent’s last king directly. With no legal moves, an attacked last king means checkmate; otherwise the game is drawn by stalemate.',
     '같은 차례와 기물 배치가 5회 반복되면 무승부입니다.':'The game is drawn when the same position occurs five times with the same side to move.',
     '폰 이동이나 포획 없이 양쪽이 각각 50수(총 100회 행마)를 진행하면 무승부입니다.':'The game is drawn after each player makes 50 moves (100 plies in total) without a pawn move or capture.',
     '보드 회전':'Rotate board','크게 보기':'Expand board','작게 보기':'Shrink board','홈 화면':'Home','대국 정보':'Game info','정보 닫기':'Close info','대국 현황':'Overview','채팅':'Chat','대국 채팅':'Game chat','대국 시간':'Clocks','남은 시간':'Time remaining','총 대국시간':'Elapsed time','기물 점수':'Material score','이동 기록':'Move history','포획된 기물':'Captured pieces','백이 잃은 기물':'White’s lost pieces','흑이 잃은 기물':'Black’s lost pieces',

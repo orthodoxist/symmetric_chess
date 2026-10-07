@@ -1,6 +1,6 @@
 (function(root){
   const rules=typeof module!=='undefined'?require('./engine.js'):root.Chess10;
-  const PROTOCOL='symmetric-chess-v5-stalemate-draw';
+  const PROTOCOL='symmetric-chess-v6-checkmate-promotion';
   function pack(game){
     return {...game,repetitions:[...game.repetitions],history:game.history.map(({captureBadge,valueBubbleUntil,...entry})=>entry)};
   }
@@ -108,7 +108,6 @@
       if(revision===this.revision&&color===this.game.turn&&!this.game.winner&&!this.game.draw&&action){
         if(action.kind==='move'&&validSquare(action.from)&&validSquare(action.to))accepted=rules.move(this.game,...action.from,...action.to);
         else if(action.kind==='promote'&&typeof action.type==='string')accepted=rules.promote(this.game,action.type);
-        else if(action.kind==='resign'){this.game.winner=color==='white'?'black':'white';this.game.winReason='resign';this.game.pending=null;accepted=true;}
       }
       if(accepted)this.revision++;
       this.broadcast();this.onState(this.game,accepted||Boolean(this.game.winner));return accepted;

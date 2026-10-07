@@ -43,6 +43,7 @@
     if(p.type==='P') {
       const direction=p.color==='white'?-1:1;
       const a=r+direction;
+      if((a===0||a===9)&&!game.captured[p.color].some(q=>q.type!=='P'))return [];
       if(inside(a,c)&&!game.board[a][c])result.push([a,c]);
       for(const b of [c-1,c+1]) if(inside(a,b)&&game.board[a][b]&&game.board[a][b].color!==p.color) result.push([a,b]);
     } else if(p.type==='N') {
@@ -69,7 +70,8 @@
   }
   function moves(game,r,c){
     return pseudoMoves(game,r,c).filter(([a,b])=>{
-      const next=copyGame(game),color=game.turn;
+      const target=game.board[a][b];
+        const next=copyGame(game),color=game.turn;
       move(next,r,c,a,b,false);
       return next.pending?promotionChoices(next).length>0:safeAfterMove(next,color);
     });
@@ -88,6 +90,8 @@
     else if(game.quietPlies>=100) game.draw='fiftyMoves';
   }
   function move(game,r,c,a,b,adjudicate=true) {
+    const targetKing=game.board[a]?.[b];
+    if(targetKing?.type==='K'&&game.board.flat().filter(p=>p?.type==='K'&&p.color===targetKing.color).length===1)return false;
     if(!(adjudicate?moves:pseudoMoves)(game,r,c).some(([x,y])=>x===a&&y===b)) return false;
     const p=game.board[r][c],target=game.board[a][b];
     game.quietPlies=p.type==='P'||target?0:game.quietPlies+1;
@@ -98,8 +102,7 @@
     if(target?.type==='K'&&!game.board.some(row=>row.some(q=>q?.color===target.color&&q.type==='K'))){game.winner=p.color;game.winReason='kingCapture';}
     if(!game.winner&&p.type==='P'&&(a===0||a===9)) {
       const choices=game.captured[p.color].filter(q=>q.type!=='P');
-      if(!choices.length){game.winner=p.color;game.winReason='promotion';}
-      else game.pending={r:a,c:b,color:p.color,choices:[...new Set(choices.map(q=>q.type))]};
+      game.pending={r:a,c:b,color:p.color,choices:[...new Set(choices.map(q=>q.type))]};
     }
     if(adjudicate&&game.pending)game.pending.choices=promotionChoices(game);
     if(!game.pending&&!game.winner) finish(game,adjudicate);
@@ -123,15 +126,12 @@
     for(const color of ['white','black']){
       const opponent=color==='white'?'black':'white';
       const view={...game,turn:color};
-      const promotionWins=!game.captured[color].some(p=>p.type!=='P');
       game.board.forEach((row,r)=>row.forEach((p,c)=>{
         if(p?.color!==color) return;
         for(const [a,b] of pseudoMoves(view,r,c)){
           const target=game.board[a][b];
           if(kings[opponent]===1&&target?.color===opponent&&target.type==='K')
             threats[color].push({reason:'lastKing',from:[r,c],to:[a,b]});
-          else if(promotionWins&&p.type==='P'&&(a===0||a===9))
-            threats[color].push({reason:'promotion',from:[r,c],to:[a,b]});
         }
       }));
     }
@@ -152,7 +152,7 @@
           board:game.board.map(row=>row.map(p=>p?{...p}:null)),
           captured:{white:[...game.captured.white],black:[...game.captured.black]},
           history:[...game.history],repetitions:new Map(game.repetitions)};
-        move(next,r,c,a,b,false);
+        if(!move(next,r,c,a,b,false))continue;
         if(winningThreats(next)[opponent].some(t=>t.reason==='lastKing'))result[color].push([a,b]);
       }
     }

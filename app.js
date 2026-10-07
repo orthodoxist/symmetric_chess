@@ -126,7 +126,6 @@ function boardHighlights(){
   if(ended){
     for(const key of lastHighlights.winning)winning.add(key);
     for(const key of lastHighlights.losing)losing.add(key);
-    if(game.winReason==='promotion'){const move=game.history.at(-1);if(move){winning.add(move.from.join(','));losing.add(move.to.join(','));}}
   }else lastHighlights={winning:[...winning],losing:[...losing]};
   return {winning,losing};
 }
@@ -243,7 +242,7 @@ function render(){
   }));
   if(boardFlipped){const squares=Array.from(board.children).reverse();board.replaceChildren();for(const square of squares)board.append(square);}
   if(shouldAnimate)animateLastMove(lastMove);
-  const victoryNames={checkmate:t('체크메이트'),stalemate:t('스테일메이트'),promotion:t('프로모션'),timeout:t('시간'),kingCapture:t('킹 포획'),resign:t('기권')};
+  const victoryNames={checkmate:t('체크메이트'),timeout:t('시간'),resign:t('기권')};
   const resultColor=gameMode.value==='local'?game.winner:onlineMode()?onlineSession?.color:humanColor.value;
   const outcome=resultColor===game.winner;
   const resultLabel=typeof Chess10I18n!=='undefined'&&Chess10I18n.language==='en'?colorName(resultColor)+' '+(outcome?'wins':'loses')+' by '+(victoryNames[game.winReason]||'king capture'):colorName(resultColor)+' '+(victoryNames[game.winReason]||'')+' '+(outcome?t('승리'):t('패배'));

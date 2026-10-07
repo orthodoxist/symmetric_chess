@@ -3,12 +3,12 @@ const {createGame,moves,move,promote}=require('./engine.js');
 function empty(){const g=createGame();g.board=Array.from({length:10},()=>Array(10).fill(null));g.board[9][4]={type:'K',color:'white'};g.board[0][4]={type:'K',color:'black'};g.board[0][5]={type:'K',color:'black'};return g;}
 let g=createGame();assert.equal(g.board.flat().filter(Boolean).length,40);assert.deepEqual(g.board[9].map(p=>p.type),['R','N','B','Q','K','K','Q','B','N','R']);assert.deepEqual(moves(g,8,0),[[7,0]]);assert.equal(move(g,8,0,4,0),false);
 g=empty();g.board[1][0]={type:'P',color:'white'};g.captured.white=[{type:'Q',color:'white'},{type:'P',color:'white'}];assert.ok(move(g,1,0,0,0));assert.deepEqual(g.pending.choices,['Q']);assert.equal(move(g,0,4,1,4),false);assert.equal(promote(g,'R'),false);assert.ok(promote(g,'Q'));assert.equal(g.board[0][0].type,'Q');assert.equal(g.captured.white.length,1);assert.equal(g.turn,'black');
-g=empty();g.board[1][0]={type:'P',color:'white'};g.captured.white=[{type:'P',color:'white'}];move(g,1,0,0,0);assert.equal(g.winner,'white');
-g=empty();g.board[1][4]={type:'R',color:'white'};move(g,1,4,0,4);assert.equal(g.winner,null);assert.equal(g.captured.black[0].type,'K');g.turn='white';move(g,0,4,0,5);assert.equal(g.winner,'white');
+g=empty();g.board[1][0]={type:'P',color:'white'};g.captured.white=[{type:'P',color:'white'}];assert.equal(move(g,1,0,0,0),false);assert.equal(g.winner,null);
+g=empty();g.board[1][4]={type:'R',color:'white'};move(g,1,4,0,4);assert.equal(g.winner,null);assert.equal(g.captured.black[0].type,'K');g.turn='white';assert.equal(move(g,0,4,0,5),false);assert.equal(g.winner,null);assert.equal(g.board[0][5].type,'K');assert.equal(move(g,0,4,0,5,false),false);
 g=empty();g.board[1][0]={type:'P',color:'white'};g.captured.white=[{type:'K',color:'white'}];move(g,1,0,0,0);promote(g,'K');assert.equal(g.board[0][0].type,'K');assert.equal(g.captured.white.length,0);
 g=empty();g.board[8][4]={type:'R',color:'black'};assert.ok(move(g,9,4,8,4));assert.equal(g.captured.black[0].type,'R');
 g=empty();g.board[5][5]={type:'R',color:'white'};g.board[4][5]={type:'P',color:'white'};assert.ok(!moves(g,5,5).some(([r,c])=>r===3&&c===5));
-console.log('Passed: setup, pawn movement, promotion choices, instant victory, two-king capture, king revival, unrestricted king capture, blocked sliding moves.');
+console.log('Passed: setup, pawn movement, promotion choices, blocked final-rank entry, first-king capture, king revival, last-king capture forbidden, blocked sliding moves.');
 g=createGame();
 for(let cycle=0;cycle<4;cycle++) {
   assert.ok(move(g,9,1,7,2));assert.ok(move(g,0,1,2,2));
@@ -23,7 +23,7 @@ g=empty();g.quietPlies=99;g.board[8][4]={type:'R',color:'black'};move(g,9,4,8,4)
 const {positionKey}=require('./engine.js');
 g=empty();const key=positionKey(g);g.captured.white.push({type:'Q',color:'white'});assert.notEqual(positionKey(g),key);
 g=empty();g.board=Array.from({length:10},()=>Array(10).fill(null));g.board[0][0]={type:'P',color:'white'};assert.deepEqual(moves(g,0,0),[]);assert.equal(g.draw,null);
-g=empty();g.board[0][5]=null;g.board[1][4]={type:'R',color:'white'};g.quietPlies=99;move(g,1,4,0,4);assert.equal(g.winner,'white');assert.equal(g.draw,null);
+g=empty();g.board[0][5]=null;g.board[1][4]={type:'R',color:'white'};g.quietPlies=99;assert.equal(move(g,1,4,0,4),false);assert.equal(g.winner,null);assert.equal(g.draw,null);
 console.log('Passed: fivefold repetition, draw move lock, 100-ply boundary, pawn/capture resets, promotion inventory identity, draw precedence, victory precedence.');
 const {startClock,tickClock}=require('./engine.js');
 for(const minutes of [15,30,45]){
@@ -96,14 +96,12 @@ g.board[0][5]=null;const before=JSON.stringify(g.board);assert.ok(winningThreats
 g.turn='black';assert.ok(winningThreats(g).white.some(t=>t.reason==='lastKing'));
 g.board[0][4]=null;assert.deepEqual(winningThreats(g).white,[]);
 for(const color of ['white','black']){
-  g=empty();const r=color==='white'?1:8,a=color==='white'?0:9,opponent=color==='white'?'black':'white';
-  g.board[r][0]={type:'P',color,moved:true};
-  assert.ok(winningThreats(g)[color].some(t=>t.reason==='promotion'&&t.to[0]===a));
-  g.captured[color]=[{type:'P',color}];assert.ok(winningThreats(g)[color].some(t=>t.reason==='promotion'));
-  g.captured[color].push({type:'N',color});assert.deepEqual(winningThreats(g)[color],[]);
-  g.captured[color]=[];g.board[a][0]={type:'P',color:opponent};assert.deepEqual(winningThreats(g)[color],[]);
-  g.board[a][1]={type:'R',color:opponent};assert.ok(winningThreats(g)[color].some(t=>t.reason==='promotion'&&t.to[1]===1));
-  g.winner=color;assert.deepEqual(winningThreats(g),{white:[],black:[]});
+  g=empty();g.turn=color;const r=color==='white'?1:8,a=color==='white'?0:9,opponent=color==='white'?'black':'white';g.board[r][0]={type:'P',color};
+  for(const captured of [[],[{type:'P',color}]]){
+    g.captured[color]=captured;g.board[a][1]={type:'R',color:opponent};const before=JSON.stringify(g.board);
+    assert.deepEqual(moves(g,r,0),[]);assert.equal(move(g,r,0,a,0),false);assert.equal(move(g,r,0,a,1),false);assert.equal(JSON.stringify(g.board),before);assert.equal(g.winner,null);assert.deepEqual(winningThreats(g)[color],[]);
+  }
+  g.captured[color]=[{type:'N',color}];assert.ok(moves(g,r,0).some(p=>p[0]===a&&p[1]===0));assert.ok(moves(g,r,0).some(p=>p[0]===a&&p[1]===1));assert.ok(move(g,r,0,a,1));assert.ok(g.pending);assert.ok(promote(g,'N'));assert.equal(g.board[a][1].type,'N');assert.equal(g.winner,null);
 }
 g=empty();g.board[0][5]=null;g.board[2][2]={type:'B',color:'white'};assert.ok(winningThreats(g).white.some(t=>t.reason==='lastKing'));g.board[1][3]={type:'N',color:'white'};assert.deepEqual(winningThreats(g).white,[]);
 g=empty();g.board[0][5]=null;g.board[2][5]={type:'N',color:'white'};assert.ok(winningThreats(g).white.some(t=>t.reason==='lastKing'));
@@ -123,7 +121,7 @@ g.board[3][3]={type:'P',color:'white'};assert.ok(!unsafeKingMoves(g).white.some(
 g=loneKingGame();g.board[4][5]={type:'R',color:'black'};assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===5)); // Captured attacker disappears.
 g=loneKingGame();g.board[2][5]={type:'N',color:'black'};assert.ok(unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===6));
 g=loneKingGame();g.board[3][4]={type:'P',color:'black',moved:true};assert.ok(unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===5));assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===4));
-g=loneKingGame();g.board[0][0]=null;g.board[4][5]={type:'K',color:'black'};g.board[4][0]={type:'R',color:'black'};assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===5)); // Capturing last enemy king ends game immediately.
+g=loneKingGame();g.board[0][0]=null;g.board[4][5]={type:'K',color:'black'};g.board[4][0]={type:'R',color:'black'};assert.ok(!unsafeKingMoves(g).white.some(([r,c])=>r===4&&c===5)); // Last enemy king cannot be directly captured.
 g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.quietPlies=99;assert.deepEqual(unsafeKingMoves(g).white,[]); // Draw ends game before a reply.
 g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.turn='black';assert.deepEqual(unsafeKingMoves(g).white,[]);
 g.board[0][0]=null;g.board[5][5]=null;g.board[5][5]={type:'K',color:'black'};g.board[5][0]={type:'R',color:'white'};g.board[9][9]={type:'K',color:'white'};assert.ok(unsafeKingMoves(g).black.length>0);
@@ -132,9 +130,9 @@ console.log('Passed: unsafe lone-king destinations, opened rook lines, cannon sc
 // Screenshot regression: black king e10, white pawn f9, black queen g10.
 g=createGame();g.turn='black';g.board[0][5]=null;g.board[1][5]={type:'P',color:'white',moved:true};g.board[8][4]=null;g.board[7][5]={type:'P',color:'black',moved:true};
 const screenshotThreats=winningThreats(g);
-assert.ok(screenshotThreats.white.some(t=>t.reason==='lastKing'&&t.to.join(',')==='0,4'));
-assert.ok(screenshotThreats.white.some(t=>t.reason==='promotion'&&t.to.join(',')==='0,5'));
-assert.ok(screenshotThreats.white.some(t=>t.reason==='promotion'&&t.to.join(',')==='0,6'));
+assert.deepEqual(screenshotThreats.white,[]);
+assert.ok(!screenshotThreats.white.some(t=>t.reason==='promotion'));
+
 assert.ok(!unsafeKingMoves(g).black.some(p=>p.join(',')==='0,5'));
 assert.ok(!unsafeKingMoves(g).black.some(p=>p.join(',')==='0,6'));
 console.log('Passed: screenshot separates safe f10 and occupied g10 from threatened e10.');
@@ -146,7 +144,7 @@ g=matePosition();g.board[9][0]={type:'K',color:'black'};assert.equal(isCheckmate
 g=matePosition();g.board[2][8]={type:'N',color:'black'};assert.equal(isCheckmate(g),false); // Capture checking rook.
 g=matePosition();g.board[2][5]={type:'R',color:'black'};assert.equal(isCheckmate(g),false); // Interpose.
 g=matePosition();g.board[8][4]={type:'P',color:'black',moved:true};g.captured.black=[{type:'K',color:'black'}];assert.equal(isCheckmate(g),false); // Revive second king.
-g=matePosition();g.board[8][4]={type:'P',color:'black',moved:true};assert.equal(isCheckmate(g),false); // Immediate promotion victory.
+g=matePosition();g.board[8][4]={type:'P',color:'black',moved:true};assert.equal(isCheckmate(g),true); // A pawn without a captured non-pawn cannot escape via promotion.
 g=matePosition();g.board[0][9]=null;g.board[0][1]={type:'P',color:'black'};g.board[1][0]={type:'P',color:'black'};g.board[1][1]={type:'P',color:'black'};assert.equal(isCheckmate(g),false); // No check, no mate.
 g=matePosition();g.turn='white';g.board[1][9]=null;g.board[1][8]={type:'R',color:'white'};assert.ok(move(g,1,8,1,9));assert.equal(g.winner,'white');assert.equal(g.winReason,'checkmate');assert.equal(move(g,0,0,1,0),false);
 const mateTime={...g.clock.remaining};startClock(g,0);tickClock(g,1000);assert.deepEqual(g.clock.remaining,mateTime);
@@ -168,16 +166,16 @@ assert.ok(move(g,5,5,4,5)); // Safe escape still allowed.
 g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.board[7][7]={type:'N',color:'white'};assert.equal(move(g,7,7,4,5),false); // Moving another piece cannot ignore king threat.
 g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.board[6][3]={type:'R',color:'white'};assert.ok(move(g,6,3,5,3)); // Block saves last king.
 function promotionThreatPosition(){const state=createGame();state.board=Array.from({length:10},()=>Array(10).fill(null));state.board[0][0]={type:'K',color:'white'};state.board[5][5]={type:'K',color:'black'};state.board[8][5]={type:'P',color:'black',moved:true};return state;}
-g=promotionThreatPosition();assert.deepEqual(moves(g,0,0),[]);assert.equal(move(g,0,0,1,0),false);assert.ok(isStalemate(g));assert.equal(isCheckmate(g),false);
-g=promotionThreatPosition();g.board[9][0]={type:'R',color:'white'};assert.ok(moves(g,9,0).some(([r,c])=>r===9&&c===5));assert.ok(!moves(g,9,0).some(([r,c])=>r===9&&c===4));assert.ok(move(g,9,0,9,5)); // Forward blockade prevents promotion.
+g=promotionThreatPosition();assert.ok(moves(g,0,0).length>0);assert.ok(move(g,0,0,1,0));assert.equal(isStalemate(g),false);assert.equal(isCheckmate(g),false);
+g=promotionThreatPosition();g.board[9][0]={type:'R',color:'white'};assert.ok(moves(g,9,0).some(([r,c])=>r===9&&c===5));assert.ok(moves(g,9,0).some(([r,c])=>r===9&&c===4));assert.ok(move(g,9,0,9,5)); // Forward blockade prevents promotion.
 g=promotionThreatPosition();g.board[8][0]={type:'R',color:'white'};assert.ok(move(g,8,0,8,5)); // Capture removes promotion threat.
 g=promotionThreatPosition();g.captured.black=[{type:'N',color:'black'}];assert.ok(moves(g,0,0).length>0); // Ordinary promotion is not an instant defeat.
-g=promotionThreatPosition();g.turn='black';g.board[8][5]=null;g.board[7][5]={type:'P',color:'black',moved:true};assert.ok(move(g,7,5,8,5));assert.equal(g.winner,null);assert.equal(g.draw,'stalemate');
+g=promotionThreatPosition();g.turn='black';g.board[8][5]=null;g.board[7][5]={type:'P',color:'black',moved:true};assert.ok(move(g,7,5,8,5));assert.equal(g.winner,null);assert.equal(g.draw,null);
 g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.board[1][8]={type:'P',color:'white',moved:true};g.captured.white=[{type:'K',color:'white'},{type:'Q',color:'white'}];
 assert.ok(move(g,1,8,0,8));assert.deepEqual(g.pending.choices,['K']);assert.equal(promote(g,'Q'),false);assert.ok(promote(g,'K'));
-g=empty();g.board[1][0]={type:'P',color:'white',moved:true};assert.ok(move(g,1,0,0,0));assert.equal(g.winner,'white');assert.equal(g.winReason,'promotion');
+g=empty();g.board[1][0]={type:'P',color:'white',moved:true};assert.equal(move(g,1,0,0,0),false);assert.equal(g.winner,null);assert.equal(g.winReason,null);
 g=promotionThreatPosition();const legalBefore=JSON.stringify({board:g.board,history:g.history,repetitions:[...g.repetitions]});moves(g,0,0);assert.equal(JSON.stringify({board:g.board,history:g.history,repetitions:[...g.repetitions]}),legalBefore);
-console.log('Passed: illegal king exposure, mandatory defense with all pieces, promotion-loss prevention, pawn capture/block defenses, legal promotion choices, promotion-caused stalemate, victory reasons, non-mutating legality.');
+console.log('Passed: illegal king exposure, mandatory defense with all pieces, no promotion victory threats, pawn capture/block defenses, legal promotion choices, blocked promotion without captured pieces, victory reasons, non-mutating legality.');
 
 
 for(const color of ['white','black']){
