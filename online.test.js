@@ -5,7 +5,7 @@ const guest=new Session({Peer,token:'test'});const sent=[];host.conn={open:true,
 host.ready=true;E.startClock(host.game,now);host.broadcast();assert.equal(guest.color,'black');assert.equal(guest.game.clock.started,true);assert.ok(guest.game.repetitions instanceof Map);
 assert.equal(host.apply({kind:'move',from:[8,0],to:[5,0]},'black',0),false);
 assert.equal(host.apply({kind:'move',from:[8,0],to:[4,0]},'white',0),false);
-assert.equal(host.apply({kind:'move',from:[8,0],to:[5,0]},'white',0),true);assert.equal(guest.game.turn,'black');assert.equal(guest.game.board[5][0].color,'white');
+assert.equal(host.apply({kind:'move',from:[8,0],to:[5,0]},'white',0),false);assert.equal(host.apply({kind:'move',from:[8,0],to:[6,0]},'white',0),false);assert.equal(host.apply({kind:'move',from:[8,0],to:[7,0]},'white',0),true);assert.equal(guest.game.turn,'black');assert.equal(guest.game.board[7][0].color,'white');
 assert.equal(host.apply({kind:'move',from:[1,0],to:[2,0]},'black',0),false);
 assert.equal(host.apply({kind:'move',from:[1,0],to:[2,0]},'black',1),true);assert.equal(guest.game.history.length,2);assert.equal(host.apply({kind:'move',from:[NaN,0],to:[2,0]},'white',2),false);
 assert.equal(host.apply({kind:'promote',type:'Q'},'white',2),false);
@@ -13,7 +13,7 @@ const frozen=JSON.stringify(pack(host.game));assert.equal(JSON.stringify(pack(un
 host.game.board=Array.from({length:10},()=>Array(10).fill(null));host.game.turn='white';host.game.board[9][4]={type:'K',color:'white'};host.game.board[0][4]={type:'K',color:'black'};host.game.board[0][5]={type:'K',color:'black'};host.game.board[1][0]={type:'P',color:'white',moved:true};host.game.captured.white=[{type:'Q',color:'white'}];host.game.winner=null;
 assert.ok(host.apply({kind:'move',from:[1,0],to:[0,0]},'white',2));assert.ok(guest.game.pending);assert.equal(host.apply({kind:'promote',type:'N'},'white',3),false);assert.ok(host.apply({kind:'promote',type:'Q'},'white',3));assert.equal(guest.game.board[0][0].type,'Q');
 now+=900001;host.tick();assert.equal(host.game.winner,'white');assert.equal(guest.game.winReason,'timeout');
-const intruder=new EventEmitter();intruder.metadata={protocol:'symmetric-chess-v2-draw5-50',token:'intruder'};intruder.send=m=>{assert.equal(m.kind,'reject');};intruder.close=()=>{};host.guestToken='original';host.accept(intruder);intruder.emit('open');
+const intruder=new EventEmitter();intruder.metadata={protocol:'symmetric-chess-v4-pawn-one',token:'intruder'};intruder.send=m=>{assert.equal(m.kind,'reject');};intruder.close=()=>{};host.guestToken='original';host.accept(intruder);intruder.emit('open');
 // Binary serialization lets PeerJS chunk snapshots beyond its JSON channel limit.
 guest.conn=null;guest.room='test-room';guest.peer.connect=(room,options)=>{assert.equal(options.serialization,'binary');assert.equal(options.reliable,true);return new EventEmitter();};guest.connect();
 host.close();guest.conn=null;guest.close();console.log('Passed: host authority, colors, synchronized states, turn/revision/legality rejection, promotion, timeout and extra-player rejection.');

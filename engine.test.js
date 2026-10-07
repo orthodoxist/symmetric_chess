@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const {createGame,moves,move,promote}=require('./engine.js');
 function empty(){const g=createGame();g.board=Array.from({length:10},()=>Array(10).fill(null));g.board[9][4]={type:'K',color:'white'};g.board[0][4]={type:'K',color:'black'};g.board[0][5]={type:'K',color:'black'};return g;}
-let g=createGame();assert.equal(g.board.flat().filter(Boolean).length,40);assert.deepEqual(g.board[9].map(p=>p.type),['R','N','B','Q','K','K','Q','B','N','R']);assert.deepEqual(moves(g,8,0),[[7,0],[6,0],[5,0]]);assert.equal(move(g,8,0,4,0),false);
+let g=createGame();assert.equal(g.board.flat().filter(Boolean).length,40);assert.deepEqual(g.board[9].map(p=>p.type),['R','N','B','Q','K','K','Q','B','N','R']);assert.deepEqual(moves(g,8,0),[[7,0]]);assert.equal(move(g,8,0,4,0),false);
 g=empty();g.board[1][0]={type:'P',color:'white'};g.captured.white=[{type:'Q',color:'white'},{type:'P',color:'white'}];assert.ok(move(g,1,0,0,0));assert.deepEqual(g.pending.choices,['Q']);assert.equal(move(g,0,4,1,4),false);assert.equal(promote(g,'R'),false);assert.ok(promote(g,'Q'));assert.equal(g.board[0][0].type,'Q');assert.equal(g.captured.white.length,1);assert.equal(g.turn,'black');
 g=empty();g.board[1][0]={type:'P',color:'white'};g.captured.white=[{type:'P',color:'white'}];move(g,1,0,0,0);assert.equal(g.winner,'white');
 g=empty();g.board[1][4]={type:'R',color:'white'};move(g,1,4,0,4);assert.equal(g.winner,null);assert.equal(g.captured.black[0].type,'K');g.turn='white';move(g,0,4,0,5);assert.equal(g.winner,'white');
@@ -39,21 +39,21 @@ g=empty();g.board[1][0]={type:'P',color:'white'};g.captured.white=[{type:'Q',col
 g=createGame();startClock(g,0);tickClock(g,899999);assert.equal(g.winner,null);tickClock(g,900000);assert.equal(g.winner,'black');
 g=createGame();startClock(g,0);g.draw='repetition';tickClock(g,1000000);assert.equal(g.winner,null);assert.equal(g.clock.remaining.white,900000);
 console.log('Passed: 15/30/45-minute clocks, start gate, turn switching without increment, timeout boundary, stopped clocks, promotion timeout, draw clock stop.');
-for(const color of ['white','black']) for(const distance of [1,2,3]){
-  g=createGame();g.turn=color;const start=color==='white'?8:1,dir=color==='white'?-1:1;
-  assert.ok(move(g,start,3,start+dir*distance,3));assert.equal(g.board[start+dir*distance][3].moved,true);
-  g.turn=color;assert.deepEqual(moves(g,start+dir*distance,3),[[start+dir*(distance+1),3]]);
+for(const color of ['white','black']){
+  const start=color==='white'?8:1,dir=color==='white'?-1:1;
+  for(const moved of [false,true]){
+    g=createGame();g.turn=color;g.board[start][3].moved=moved;
+    assert.deepEqual(moves(g,start,3),[[start+dir,3]]);
+    for(const distance of [2,3])assert.equal(move(g,start,3,start+dir*distance,3),false);
+    assert.ok(move(g,start,3,start+dir,3));g.turn=color;assert.deepEqual(moves(g,start+dir,3),[[start+2*dir,3]]);
+  }
+  for(const blocker of ['white','black']){
+    g=createGame();g.turn=color;g.board[start+dir][3]={type:'N',color:blocker};assert.deepEqual(moves(g,start,3),[]);
+  }
+  g=createGame();g.turn=color;g.board[start+dir][4]={type:'N',color:color==='white'?'black':'white'};assert.ok(move(g,start,3,start+dir,4));g.turn=color;assert.deepEqual(moves(g,start+dir,4),[[start+2*dir,4]]);
 }
-for(const color of ['white','black']) for(const block of [1,2,3]){
-  g=createGame();g.turn=color;const start=color==='white'?8:1,dir=color==='white'?-1:1;
-  g.board[start+dir*block][3]={type:'N',color:color==='white'?'black':'white'};
-  assert.deepEqual(moves(g,start,3),Array.from({length:block-1},(_,i)=>[start+dir*(i+1),3]));
-  assert.equal(move(g,start,3,start+dir*block,3),false);
-}
-g=createGame();g.board[7][4]={type:'N',color:'black'};assert.ok(move(g,8,3,7,4));assert.equal(g.board[7][4].moved,true);g.turn='white';assert.deepEqual(moves(g,7,4),[[6,4]]);
-g=createGame();g.board[8][3].moved=true;assert.deepEqual(moves(g,8,3),[[7,3]]);
-const movedKey=positionKey(g);g.board[8][3].moved=false;assert.notEqual(positionKey(g),movedKey);
-console.log('Passed: both colors first 1/2/3-square advances, one-square later moves, all path blockers, first capture consumes privilege, pawn rights in repetition key.');
+g=createGame();const movedKey=positionKey(g);g.board[8][3].moved=true;assert.equal(positionKey(g),movedKey);
+console.log('Passed: both colors advance exactly one square on every move, blocked advances, unchanged diagonal captures, legacy moved flags do not affect repetition.');
 const knightOffsets=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
 for(const color of ['white','black']){
   g=empty();g.turn=color;g.board[5][5]={type:'N',color};

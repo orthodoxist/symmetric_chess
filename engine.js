@@ -2,14 +2,14 @@
 (function (root) {
   const order = ['R','N','B','Q','K','K','Q','B','N','R'];
   function positionKey(game) {
-    return JSON.stringify([game.turn,game.board, ...['white','black'].map(color=>
+    return JSON.stringify([game.turn,game.board.map(row=>row.map(p=>p?.type==='P'?{type:p.type,color:p.color}:p)), ...['white','black'].map(color=>
       game.captured[color].filter(p=>p.type!=='P').map(p=>p.type).sort())]);
   }
   const createGame = (minutes=15) => {
     const game = {
     board: Array.from({length:10}, (_,r) => Array.from({length:10}, (_,c) =>
       r===0 || r===9 ? {type:order[c],color:r===0?'black':'white'} :
-      r===1 || r===8 ? {type:'P',color:r===1?'black':'white',moved:false} : null)),
+      r===1 || r===8 ? {type:'P',color:r===1?'black':'white'} : null)),
     turn:'white', captured:{white:[],black:[]}, winner:null, draw:null, pending:null, history:[], quietPlies:0, repetitions:new Map(),
     clock:{remaining:{white:minutes*60000,black:minutes*60000},started:false,last:null}, winReason:null
     };
@@ -43,12 +43,7 @@
     if(p.type==='P') {
       const direction=p.color==='white'?-1:1;
       const a=r+direction;
-      const limit=!p.moved&&r===(p.color==='white'?8:1)?3:1;
-      for(let step=1;step<=limit;step++){
-        const next=r+direction*step;
-        if(!inside(next,c)||game.board[next][c]) break;
-        result.push([next,c]);
-      }
+      if(inside(a,c)&&!game.board[a][c])result.push([a,c]);
       for(const b of [c-1,c+1]) if(inside(a,b)&&game.board[a][b]&&game.board[a][b].color!==p.color) result.push([a,b]);
     } else if(p.type==='N') {
       for(const [a,b] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) add(r+a,c+b);
@@ -98,7 +93,7 @@
     game.quietPlies=p.type==='P'||target?0:game.quietPlies+1;
     if(target) game.captured[target.color].push({...target});
     game.board[a][b]=p; game.board[r][c]=null;
-    if(p.type==='P') p.moved=true;
+
     game.history.push({color:p.color,type:p.type,from:[r,c],to:[a,b],capture:target?.type||null});
     if(target?.type==='K'&&!game.board.some(row=>row.some(q=>q?.color===target.color&&q.type==='K'))){game.winner=p.color;game.winReason='kingCapture';}
     if(!game.winner&&p.type==='P'&&(a===0||a===9)) {

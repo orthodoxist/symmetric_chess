@@ -11,7 +11,7 @@
     '방 만들기':'Create room','초대 링크':'Invite link','방을 만들면 표시됩니다':'Appears after you create a room','초대 링크 복사':'Copy invite link','상대가 보낸 링크 입력':'Paste your opponent’s invite link','방 입장':'Join room','대국 시작':'Start game','게임 규칙':'Game rules',
     '시작 배치는 R N B Q K K Q B N R 입니다.':'The starting back rank is R N B Q K K Q B N R.',
     '상대 킹 2개를 모두 포획하면 승리합니다.':'Capture both of your opponent’s kings to win.',
-    '폰은 첫 이동에 1·2·3칸 전진을 선택할 수 있습니다.':'A pawn may advance 1, 2, or 3 squares on its first move.',
+    '폰은 첫 이동을 포함해 항상 1칸만 전진할 수 있습니다.':'A pawn may advance only one square, including on its first move.',
     '캐슬링과 앙파상은 없습니다.':'There is no castling or en passant.',
     '프로모션은 포획된 자신의 비폰 기물만 선택할 수 있습니다. 포획된 킹도 선택 가능합니다.':'A pawn can promote only to one of your captured non-pawn pieces, including a captured king.',
     '프로모션 시 자신의 비폰 기물이 모두 살아 있으면 승리합니다.':'You win by promoting a pawn if all of your non-pawn pieces are still on the board.',
