@@ -23,7 +23,7 @@ function play(g,action){
   g=empty();g.board[8][4]={type:'P',color:'black',moved:true};g.board[9][0]={type:'R',color:'white'};
   play(g,await chooseAction(g,{level:'medium',budgetMs:150}));assert.equal(rules.winningThreats(g).black.length,0);
   g=empty();g.board[9][9]=null;g.board[2][0]={type:'K',color:'white'};g.board[1][3]={type:'Q',color:'white'};
-  play(g,await chooseAction(g,{level:'hard',budgetMs:3000}));assert.equal(g.winner,'white');assert.ok(['checkmate','stalemate'].includes(g.winReason));
+  play(g,await chooseAction(g,{level:'hard',budgetMs:3000}));assert.equal(g.winner,'white');assert.equal(g.winReason,'checkmate');
   g=rules.createGame();assert.equal(await chooseAction(g,{shouldCancel:()=>true}),null);
   g.winner='white';assert.equal(await chooseAction(g),null);
   g=rules.createGame();let yielded=false;setTimeout(()=>{yielded=true;},0);

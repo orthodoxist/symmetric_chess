@@ -24,7 +24,7 @@ const {positionKey}=require('./engine.js');
 g=empty();const key=positionKey(g);g.captured.white.push({type:'Q',color:'white'});assert.notEqual(positionKey(g),key);
 g=empty();g.board=Array.from({length:10},()=>Array(10).fill(null));g.board[0][0]={type:'P',color:'white'};assert.deepEqual(moves(g,0,0),[]);assert.equal(g.draw,null);
 g=empty();g.board[0][5]=null;g.board[1][4]={type:'R',color:'white'};g.quietPlies=99;move(g,1,4,0,4);assert.equal(g.winner,'white');assert.equal(g.draw,null);
-console.log('Passed: fivefold repetition, draw move lock, 100-ply boundary, pawn/capture resets, promotion inventory identity, no stalemate draw, victory precedence.');
+console.log('Passed: fivefold repetition, draw move lock, 100-ply boundary, pawn/capture resets, promotion inventory identity, draw precedence, victory precedence.');
 const {startClock,tickClock}=require('./engine.js');
 for(const minutes of [15,30,45]){
   g=createGame(minutes);assert.equal(g.clock.remaining.white,minutes*60000);assert.equal(g.clock.remaining.black,minutes*60000);
@@ -155,12 +155,12 @@ console.log('Passed: automatic last-king checkmate, escape/capture/block defense
 const {isStalemate}=require('./engine.js');
 g=createGame();assert.equal(isStalemate(g),false);
 g=createGame();g.board=Array.from({length:10},()=>Array(10).fill(null));g.board[9][5]={type:'P',color:'black',moved:true};g.board[0][0]={type:'K',color:'white'};g.board[8][8]={type:'N',color:'white'};g.turn='white';
-assert.ok(move(g,8,8,6,7));assert.equal(g.winner,'white');assert.equal(g.winReason,'stalemate');assert.equal(move(g,5,5,5,6),false);
+assert.ok(move(g,8,8,6,7));assert.equal(g.winner,null);assert.equal(g.draw,'stalemate');assert.equal(move(g,5,5,5,6),false);
 const staleClock={...g.clock.remaining};tickClock(g,9999999);assert.deepEqual(g.clock.remaining,staleClock);
 g=createGame();g.board=Array.from({length:10},()=>Array(10).fill(null));g.board[0][5]={type:'P',color:'white',moved:true};g.board[0][0]={type:'K',color:'black'};g.turn='white';assert.ok(isStalemate(g));assert.equal(isCheckmate(g),false);
 g.board[5][5]={type:'B',color:'white'};assert.equal(isStalemate(g),false);
 g.pending={r:0,c:0,color:'white',choices:['N']};assert.equal(isStalemate(g),false);
-console.log('Passed: automatic stalemate loss, both colors detection, cannon mobility, pending promotion exclusion, terminal move lock and clock stop.');
+console.log('Passed: automatic stalemate draw, both colors detection, cannon mobility, pending promotion exclusion, terminal move lock and clock stop.');
 // New legality: no move may leave a one-move king capture or promotion defeat.
 g=loneKingGame();g.board[5][0]={type:'R',color:'black'};
 assert.ok(!moves(g,5,5).some(([r,c])=>r===5&&c===6));assert.equal(move(g,5,5,5,6),false);
@@ -172,7 +172,7 @@ g=promotionThreatPosition();assert.deepEqual(moves(g,0,0),[]);assert.equal(move(
 g=promotionThreatPosition();g.board[9][0]={type:'R',color:'white'};assert.ok(moves(g,9,0).some(([r,c])=>r===9&&c===5));assert.ok(!moves(g,9,0).some(([r,c])=>r===9&&c===4));assert.ok(move(g,9,0,9,5)); // Forward blockade prevents promotion.
 g=promotionThreatPosition();g.board[8][0]={type:'R',color:'white'};assert.ok(move(g,8,0,8,5)); // Capture removes promotion threat.
 g=promotionThreatPosition();g.captured.black=[{type:'N',color:'black'}];assert.ok(moves(g,0,0).length>0); // Ordinary promotion is not an instant defeat.
-g=promotionThreatPosition();g.turn='black';g.board[8][5]=null;g.board[7][5]={type:'P',color:'black',moved:true};assert.ok(move(g,7,5,8,5));assert.equal(g.winner,'black');assert.equal(g.winReason,'stalemate');
+g=promotionThreatPosition();g.turn='black';g.board[8][5]=null;g.board[7][5]={type:'P',color:'black',moved:true};assert.ok(move(g,7,5,8,5));assert.equal(g.winner,null);assert.equal(g.draw,'stalemate');
 g=loneKingGame();g.board[5][0]={type:'R',color:'black'};g.board[1][8]={type:'P',color:'white',moved:true};g.captured.white=[{type:'K',color:'white'},{type:'Q',color:'white'}];
 assert.ok(move(g,1,8,0,8));assert.deepEqual(g.pending.choices,['K']);assert.equal(promote(g,'Q'),false);assert.ok(promote(g,'K'));
 g=empty();g.board[1][0]={type:'P',color:'white',moved:true};assert.ok(move(g,1,0,0,0));assert.equal(g.winner,'white');assert.equal(g.winReason,'promotion');

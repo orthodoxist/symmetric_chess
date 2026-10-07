@@ -70,7 +70,7 @@ async function chooseAction(game,{level='medium',budgetMs,random=Math.random,sho
  async function quiescence(s,alpha,beta,left){
   check();nodes++;if(s.winner)return s.winner===s.turn?WIN:-WIN;if(s.draw)return 0;
   const enemy=s.turn==='white'?'black':'white',forced=rules.winningThreats(s)[enemy].length>0,candidates=await actions(s);
-  if(!candidates.length)return -WIN;const stand=evaluate(s,s.turn);if(left===0)return stand;
+  if(!candidates.length)return rules.isCheckmate(s)?-WIN:0;const stand=evaluate(s,s.turn);if(left===0)return stand;
   if(!forced){if(stand>=beta)return stand;alpha=Math.max(alpha,stand);}let best=forced?-Infinity:stand;
   // Quiet king escapes and promotion blocks remain mandatory under threats.
   for(const {child,tactical} of candidates){if(!forced&&!tactical)continue;const value=-(await quiescence(child,-beta,-alpha,left-1));best=Math.max(best,value);alpha=Math.max(alpha,value);if(alpha>=beta)break;await cooperate();}
@@ -78,10 +78,10 @@ async function chooseAction(game,{level='medium',budgetMs,random=Math.random,sho
  }
  async function search(s,depth,alpha,beta){
   check();nodes++;if(s.winner)return s.winner===s.turn?WIN+depth:-WIN-depth;if(s.draw)return 0;
-  if(depth===0){if(advanced)return quiescence(s,alpha,beta,4);if(rules.isCheckmate(s)||rules.isStalemate(s))return -WIN;return evaluate(s,s.turn);}
+  if(depth===0){if(advanced)return quiescence(s,alpha,beta,4);if(rules.isCheckmate(s))return -WIN;if(rules.isStalemate(s))return 0;return evaluate(s,s.turn);}
   const key=stateKey(s),entry=table.get(key),initialAlpha=alpha,initialBeta=beta;
   if(entry?.depth>=depth){if(entry.flag==='exact')return entry.value;if(entry.flag==='lower')alpha=Math.max(alpha,entry.value);if(entry.flag==='upper')beta=Math.min(beta,entry.value);if(alpha>=beta)return entry.value;}
-  const candidates=(await actions(s,false,entry?.best)).slice(0,config.width);if(!candidates.length)return -WIN-depth;
+  const candidates=(await actions(s,false,entry?.best)).slice(0,config.width);if(!candidates.length)return rules.isCheckmate(s)?-WIN-depth:0;
   let best=-Infinity,bestAction=null;
   for(const {action,child} of candidates){const value=-(await search(child,depth-1,-beta,-alpha));if(value>best){best=value;bestAction=actionKey(action);}alpha=Math.max(alpha,value);if(alpha>=beta)break;await cooperate();}
   if(table.size<20000)table.set(key,{depth,value:best,best:bestAction,flag:best<=initialAlpha?'upper':best>=initialBeta?'lower':'exact'});return best;

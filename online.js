@@ -1,6 +1,6 @@
 (function(root){
   const rules=typeof module!=='undefined'?require('./engine.js'):root.Chess10;
-  const PROTOCOL='symmetric-chess-v4-pawn-one';
+  const PROTOCOL='symmetric-chess-v5-stalemate-draw';
   function pack(game){
     return {...game,repetitions:[...game.repetitions],history:game.history.map(({captureBadge,valueBubbleUntil,...entry})=>entry)};
   }

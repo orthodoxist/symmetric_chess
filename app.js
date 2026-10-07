@@ -72,7 +72,7 @@ async function playComputer(){
     syncClock();if(game.winner||game.draw)return;
     if(!action){
       if(Chess10.isCheckmate(game)||Chess10.isStalemate(game)){
-        game.winReason=Chess10.isCheckmate(game)?'checkmate':'stalemate';game.winner=humanColor.value;
+        if(Chess10.isCheckmate(game)){game.winReason='checkmate';game.winner=humanColor.value;}else game.draw='stalemate';
       }else throw new Error('Computer returned no move.');
     }else{
       if(!performMove(game,...action.from,...action.to))throw new Error('Computer returned an illegal move.');
@@ -247,7 +247,7 @@ function render(){
   const resultColor=gameMode.value==='local'?game.winner:onlineMode()?onlineSession?.color:humanColor.value;
   const outcome=resultColor===game.winner;
   const resultLabel=typeof Chess10I18n!=='undefined'&&Chess10I18n.language==='en'?colorName(resultColor)+' '+(outcome?'wins':'loses')+' by '+(victoryNames[game.winReason]||'king capture'):colorName(resultColor)+' '+(victoryNames[game.winReason]||'')+' '+(outcome?t('승리'):t('패배'));
-  document.querySelector('#status').textContent=game.winner?resultLabel+(gameMode.value==='ai'?t(' · 컴퓨터 난이도: ')+difficultyName():''):game.draw?t('무승부 · ')+(game.draw==='repetition'?t('5회 반복'):t('50수 규칙')):!game.clock.started?t('시간을 선택하고 대국을 시작하세요'):game.pending?colorName(game.turn)+t(' · 프로모션 선택'):turnLabel(game);
+  document.querySelector('#status').textContent=game.winner?resultLabel+(gameMode.value==='ai'?t(' · 컴퓨터 난이도: ')+difficultyName():''):game.draw?t('무승부 · ')+t({repetition:'5회 반복',fiftyMoves:'50수 규칙',stalemate:'스테일메이트'}[game.draw]):!game.clock.started?t('시간을 선택하고 대국을 시작하세요'):game.pending?colorName(game.turn)+t(' · 프로모션 선택'):turnLabel(game);
   const positionNumber=reviewing?reviewIndex:game.history.length;
 
   if(reviewing)document.querySelector('#status').textContent=turnLabel(view);

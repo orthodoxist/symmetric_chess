@@ -82,7 +82,7 @@
       game.winner=game.turn==='white'?'black':'white';game.winReason='checkmate';
     }
     else if(adjudicate&&isStalemate(game)){
-      game.winner=game.turn==='white'?'black':'white';game.winReason='stalemate';
+      game.draw='stalemate';
     }
     else if(count>=5) game.draw='repetition';
     else if(game.quietPlies>=100) game.draw='fiftyMoves';
